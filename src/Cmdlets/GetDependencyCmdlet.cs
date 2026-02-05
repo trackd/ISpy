@@ -2,6 +2,7 @@ namespace ISpy.Cmdlets;
 
 [Cmdlet(VerbsCommon.Get, "Dependency")]
 [OutputType(typeof(ISpyDependencyInfo))]
+[Alias("dep")]
 public class GetDependencyCmdlet : PSCmdlet {
     [Parameter(
         Mandatory = true,
@@ -14,7 +15,6 @@ public class GetDependencyCmdlet : PSCmdlet {
     public string? Path { get; set; }
 
     [Parameter(
-        Mandatory = false,
         HelpMessage = "Only show external dependencies (exclude self-references)"
     )]
     public SwitchParameter ExternalOnly { get; set; }

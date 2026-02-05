@@ -19,19 +19,22 @@
     NestedModules          = @()
     FunctionsToExport      = @()
     CmdletsToExport        = @(
-        'Get-DecompiledSource'
-        'Get-AssemblyInfo'
-        # 'Get-Type'
-        # 'Get-Method'
-        'Get-Dependency'
-        'Get-Decompiler'
+        'Expand-Type'
         'Export-DecompiledSource'
-        # 'Find-Type'
-        'Show-Type'
-        'Get-Framework'
+        'Get-AssemblyInfo'
+        'Get-DecompiledSource'
+        'Get-Decompiler'
+        'Get-Dependency'
+        'Get-Type'
     )
     VariablesToExport      = @()
-    AliasesToExport        = @()
+    AliasesToExport        = @(
+        'ent'
+        'gds'
+        'dep'
+        'epds'
+        'gai'
+    )
     DscResourcesToExport   = @()
     ModuleList             = @()
     FileList               = @()
@@ -39,7 +42,7 @@
         PSData = @{
             Tags                       = @('ILSpy', 'Decompiler', 'c#', 'dotnet', 'Assembly', 'Analysis')
             LicenseUri                 = ''
-            ProjectUri                 = 'https://github.com/trackd/PwshIlSpy'
+            ProjectUri                 = 'https://github.com/trackd/ISpy'
             IconUri                    = ''
             ReleaseNotes               = ''
             ExternalModuleDependencies = @()
@@ -47,5 +50,4 @@
         }
     }
     HelpInfoURI            = ''
-    DefaultCommandPrefix   = 'Spy'
 }

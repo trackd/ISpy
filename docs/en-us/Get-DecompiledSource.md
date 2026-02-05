@@ -1,4 +1,4 @@
-﻿---
+---
 external help file: ISpy.dll-Help.xml
 Module Name: ISpy
 online version: https://github.com/trackd/ISpy/blob/main/docs/en-US/
@@ -14,7 +14,7 @@ Decompiles .NET assemblies or specific types to readable C# source code using th
 ## SYNTAX
 
 ```powershell
-Get-DecompiledSource [-AssemblyPath] <String> [[-TypeName] <String>] [-OutputPath <String>]
+Get-DecompiledSource [-Path] <String> [[-TypeName] <String>] [-OutputPath <String>]
  [-Settings <DecompilerSettings>] [<CommonParameters>]
 ```
 
@@ -24,26 +24,41 @@ The `Get-DecompiledSource` cmdlet converts compiled .NET assemblies (DLLs, EXEs)
 
 ## EXAMPLES
 
+### Example 1: Decompile an assembly to the console
+
 ```powershell
-Get-DecompiledSource -AssemblyPath "MyLibrary.dll"
+PS C:\> Get-DecompiledSource -Path "MyLibrary.dll"
 ```
+
+This command decompiles `MyLibrary.dll` and writes human-readable C# source for the discovered types to the console.  
+
+### Example 2: Decompile a single type and write to a file
+
+```powershell
+PS C:\> Get-DecompiledSource -Path "MyLibrary.dll" -TypeName 'MyCompany.Core.Service' -OutputPath '.\Service.cs'
+```
+
+This command extracts the decompiled source for the `MyCompany.Core.Service` type and saves it to `Service.cs`.  
+
+### Example 3: Decompile all types into a folder
+
+```powershell
+PS C:\> Get-DecompiledSource -Path "$PSHOME/Humanizer.dll"
+```
+
+This command decompiles every type in `Humanizer.dll`
 
 ## PARAMETERS
 
-### -AssemblyPath
+### -Path
 
 Specifies the path to the .NET assembly file to decompile.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases: PSPath, Path
-
 Required: True
 Position: 0
-Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
-Accept wildcard characters: False
 ```
 
 ### -TypeName
@@ -52,35 +67,14 @@ Full name of a specific type to decompile.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
 Required: False
 Position: 1
-Default value: None
 Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OutputPath
-
-File path where the decompiled source will be saved.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
 ```
 
 ## INPUTS
 
-### System.String
+System.String — accepts assembly file paths from the pipeline.
 
 ## OUTPUTS
 
@@ -88,9 +82,12 @@ Accept wildcard characters: False
 
 Returns an `ISpyDecompilationResult` containing `AssemblyPath`, `TypeName`, `Source`, `Success`, and optional `FilePath`.
 
+## NOTES
+
+- Use `-TypeName` to decompile a specific type, or omit to decompile the whole assembly.
+- Output can be piped to file or formatting cmdlets for further processing.
+
 ## RELATED LINKS
 
 [Export-DecompiledSource](Export-DecompiledSource.md)
-[Get-Type](Get-Type.md)
-[Get-Method](Get-Method.md)
-[Find-Type](Find-Type.md)
+[Show-Type](Show-Type.md)

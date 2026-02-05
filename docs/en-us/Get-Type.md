@@ -1,4 +1,4 @@
-﻿---
+---
 external help file: ISpy.dll-Help.xml
 Module Name: ISpy
 online version: https://github.com/trackd/ISpy/blob/main/docs/en-US
@@ -9,30 +9,51 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-Retrieves comprehensive type information from .NET assemblies with advanced filtering and classification options.
+Retrieves detailed type metadata from a .NET assembly with flexible filtering and classification.
 
 ## SYNTAX
 
 ```powershell
-Get-Type [-AssemblyPath] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-Detailed] [-TypeKinds <String[]>]
- [<CommonParameters>]
+Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-TypeKinds <TypeKind[]>] [-IncludeCompilerGenerated] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-The `Get-Type` cmdlet provides detailed analysis of all types (classes, interfaces, enums, structs, delegates) contained within a .NET assembly. It offers sophisticated filtering options by namespace, name patterns, visibility, and type characteristics, making it an essential tool for assembly exploration and analysis.
+`Get-Type` analyzes every type defined in the specified assembly and streams back `ISpyTypeInfo`
+objects. The cmdlet supports namespace, name-pattern, visibility, and type-kind filters while keeping
+compiler-generated definitions out of the default view.
 
 ## EXAMPLES
 
+### Example 1: List public types in a namespace
+
 ```powershell
-Get-Type -AssemblyPath "MyLibrary.dll"
+PS C:\> Get-Type -Path "MyLibrary.dll" -Namespace "MyCompany.Core" -PublicOnly
 ```
+
+This command returns `ISpyTypeInfo` objects for public types in the `MyCompany.Core` namespace.
+
+### Example 2: Find types matching a wildcard
+
+```powershell
+PS C:\> Get-Type -Path "MyLibrary.dll" -NamePattern '*Manager'
+```
+
+This command finds types whose names end with `Manager` (includes non-public types unless `-PublicOnly` is specified).
+
+### Example 3: Stream and filter enums
+
+```powershell
+PS C:\> Get-Type -Path "MyLibrary.dll" -PublicOnly -TypeKind Enum | Select-Object FullName, Kind
+```
+
+This command streams public enum types and selects `FullName` and `Kind` for concise output.
 
 ## PARAMETERS
 
-### -AssemblyPath
+### -Path
 
-Path to the assembly file to analyze
+Path to the assembly file to analyze.
 
 ```yaml
 Type: String
@@ -46,84 +67,60 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -Detailed
+### -Namespace
 
-Include detailed type information
+Limit the results to a specific namespace.
 
 ```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Type: String
 Position: Named
-Default value: None
+Required: False
 Accept pipeline input: False
-Accept wildcard characters: False
 ```
 
 ### -NamePattern
 
-Filter types by name pattern (supports wildcards)
+Filter types by a wildcard-friendly name pattern.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Namespace
-
-Filter types by namespace
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
 Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
-Accept wildcard characters: False
 ```
 
 ### -PublicOnly
 
-Only return public types
+Only return public types.
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
-Default value: None
+Required: False
 Accept pipeline input: False
-Accept wildcard characters: False
 ```
 
 ### -TypeKinds
 
-Filter by type kinds. Use shorthand: 'c' (class), 'i' (interface), 's' (struct), 'e' (enum), 'd' (delegate). Can combine: 'ci' for classes and interfaces, or use full names: 'class', 'interface', etc.
+Filter by one or more type kinds.
+Other, Class, Interface, Struct, Delegate, Enum, Void, Unknown, Null, None, Dynamic, UnboundTypeArgument, TypeParameter, Array, Pointer, ByReference, Intersection, ArgList, Tuple, ModOpt, ModReq, NInt, NUInt, FunctionPointer
 
 ```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Type: TypeKind[]
 Position: Named
-Default value: None
+Required: False
 Accept pipeline input: False
-Accept wildcard characters: False
+```
+
+### -IncludeCompilerGenerated
+
+Include compiler-generated types
+
+```yaml
+Type: SwitchParameter
+Position: Named
+Required: False
+Accept pipeline input: False
 ```
 
 ## INPUTS
@@ -134,9 +131,15 @@ Accept wildcard characters: False
 
 ### ISpy.Models.ISpyTypeInfo
 
-Returns `ISpyTypeInfo` objects containing detailed information about each type including name, namespace, accessibility, inheritance information, and member counts.
+Each returned object contains the type's name, namespace, accessibility flags, `Kind`, and optionally member counts. `IsCompilerGenerated` flags synthetic definitions and helps downstream plumbing avoid noise.
+
+## NOTES
+
+- Use with Get-AssemblyInfo to correlate type counts and metadata.
+- Supports filtering by namespace, name pattern, visibility, and type kind.
 
 ## RELATED LINKS
 
-[Get-Method](Get-Method.md)
-[Find-Type](Find-Type.md)
+[Get-AssemblyInfo](Get-AssemblyInfo.md)
+[Get-Dependency](Get-Dependency.md)
+[Show-Type](Show-Type.md)

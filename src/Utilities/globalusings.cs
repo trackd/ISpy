@@ -22,3 +22,5 @@ global using ICSharpCode.Decompiler.Util;
 global using ISpy.Models;
 global using ISpy.Utilities;
 global using static ICSharpCode.Decompiler.Metadata.MetadataFile;
+global using System.Globalization;
+global using System.Collections.Immutable;

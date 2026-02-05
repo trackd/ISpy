@@ -3,10 +3,10 @@ namespace ISpy.Cmdlets;
 /// <summary>
 /// Resolves methods or cmdlets and streams ILSpy decompiled source code for the matching members.
 /// </summary>
-[Cmdlet(VerbsCommon.Show, "Type")]
+[Cmdlet(VerbsData.Expand, "Type")]
 [OutputType(typeof(string))]
 [OutputType(typeof(ISpyDecompilationResult))]
-
+[Alias("ent")]
 public class ShowTypeCmdlet : PSCmdlet {
     [Parameter(
         Position = 0,
@@ -252,10 +252,8 @@ public class ShowTypeCmdlet : PSCmdlet {
 
         if (input is IEnumerable enumerable and not string) {
             foreach (object? item in enumerable) {
-                if (item is null)
-                    continue;
-                if (TryResolveTypeInput(item, out resolvedType))
-                    return true;
+                if (item is null) continue;
+                if (TryResolveTypeInput(item, out resolvedType)) return true;
             }
             return false;
         }

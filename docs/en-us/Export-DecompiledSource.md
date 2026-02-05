@@ -1,4 +1,4 @@
-﻿---
+---
 external help file: ISpy.dll-Help.xml
 Module Name: ISpy
 online version: https://github.com/trackd/ISpy/blob/main/docs/en-US/
@@ -14,7 +14,7 @@ Exports decompiled C# source code from .NET assemblies to organized file structu
 ## SYNTAX
 
 ```powershell
-Export-DecompiledSource [-AssemblyPath] <String> [-OutputDirectory] <String> [-TypeNames <String[]>]
+Export-DecompiledSource [-Path] <String> [-OutputDirectory] <String> [-TypeNames <String[]>]
  [-Namespace <String>] [-CreateNamespaceDirectories] [-Settings <DecompilerSettings>] [-Force]
  [<CommonParameters>]
 ```
@@ -25,13 +25,36 @@ The `Export-DecompiledSource` cmdlet provides powerful bulk decompilation capabi
 
 ## EXAMPLES
 
+### Example 1: Export a library to a folder
+
 ```powershell
-Export-DecompiledSource -AssemblyPath "MyLibrary.dll" -OutputDirectory ".\Decompiled"
+PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Decompiled"
 ```
+
+This command decompiles `Humanizer.dll` and writes per-type source files into the `.\Decompiled` directory.
+
+### Example 2: Export a specific set of types
+
+```powershell
+PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Decompiled" -TypeNames @(
+    'Humanizer.NumberToWordsExtension',
+    'Humanizer.InflectorExtensions'
+  )
+```
+
+This command decompiles only the listed fully-qualified types and writes them to the output folder.
+
+### Example 3: Create namespace directories and overwrite existing files
+
+```powershell
+PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Decompiled" -CreateNamespaceDirectories -Force
+```
+
+This command creates directories matching each type's namespace and overwrites any existing files in the target directory.
 
 ## PARAMETERS
 
-### -AssemblyPath
+### -Path
 
 Specifies the path to the .NET assembly file to decompile and export. This can be a DLL, EXE, or any valid .NET assembly format.
 
@@ -47,7 +70,7 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -OutputDirectory
+### -OutputPath
 
 Specifies the root directory where decompiled source files will be exported. The directory will be created if it doesn't exist.
 
@@ -89,9 +112,14 @@ Accept wildcard characters: False
 
 Returns an `ISpyExportResult` object containing information about exported files.
 
+## NOTES
+
+- Use `-TypeNames` to export only specific types.
+- Use `-CreateNamespaceDirectories` to mirror namespaces in the output folder structure.
+- Use `-Force` to overwrite existing files.
+
 ## RELATED LINKS
 
 [Get-DecompiledSource](Get-DecompiledSource.md)
-[Get-Type](Get-Type.md)
-[Find-Type](Find-Type.md)
 [Get-AssemblyInfo](Get-AssemblyInfo.md)
+[Get-Type](Get-Type.md)

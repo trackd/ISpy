@@ -2,6 +2,7 @@ namespace ISpy.Cmdlets;
 
 [Cmdlet(VerbsData.Export, "DecompiledSource", SupportsShouldProcess = true)]
 [OutputType(typeof(ISpyExportResult))]
+[Alias("epds")]
 public class ExportDecompiledSourceCmdlet : PSCmdlet {
     [Parameter(
         Mandatory = true,

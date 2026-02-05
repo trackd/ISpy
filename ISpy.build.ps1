@@ -112,5 +112,5 @@ task CleanAfter {
 }
 
 
-task All -Jobs Clean, Build, ModuleFiles, GenerateHelp, CleanAfter #, Test
+task All -Jobs Clean, Build, ModuleFiles, GenerateHelp, CleanAfter, Test
 task BuildAndTest -Jobs Clean, Build, ModuleFiles, CleanAfter #, Test

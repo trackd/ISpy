@@ -12,7 +12,6 @@ $sb = {
     $m = [math]::Truncate | Show-SpyType -Verbose
     "------ Math.Truncate ($($m.PSChildName)) ------"
     $m | Show-TextMate -Verbose
-    # $math -split '\r?\n' | Select-Object -Skip 10 -first 15
     function helloworld {
         <#
         .DESCRIPTION
@@ -22,13 +21,11 @@ $sb = {
         "Hello, World!"
         'does this work?'
     }
-    $s = Show-SpyType 'scb' -
+    $s = Show-SpyType 'scb'
     "------ scb (alias $($s.PSChildName)) ------"
     $s
-    # $s | Show-TextMate -Verbose #-Language 'csharp'
     $f = Show-SpyType 'helloworld' -Verbose
     "------ helloworld (locally defined function $($f.PSChildName)) ------"
     $f | Show-TextMate -Verbose
-    # Get-Command -Module ISpy
 }
 pwsh -NoProfile -Command $sb -Args $PSScriptRoot
