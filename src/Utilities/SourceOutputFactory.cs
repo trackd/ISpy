@@ -1,6 +1,6 @@
 ﻿namespace ISpy.Utilities;
 
-internal static class SourceOutputFactory {
+public static class SourceOutputFactory {
     // Build output with PSChildName for downstream file-oriented processing.
     public static PSObject Create(string source, string fileBaseName, string extension = ".cs") {
         if (string.IsNullOrEmpty(source))

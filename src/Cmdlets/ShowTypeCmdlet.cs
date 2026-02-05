@@ -38,27 +38,22 @@ public class ShowTypeCmdlet : PSCmdlet {
     [Parameter(
         HelpMessage = "Emit metadata objects alongside the source text."
     )]
-    public SwitchParameter EmitMetadata { get; set; }
-
-    [Parameter(
-        HelpMessage = "Return metadata only and suppress the source string output."
-    )]
-    public SwitchParameter MetadataOnly { get; set; }
+    public SwitchParameter Metadata { get; set; }
 
     protected override void ProcessRecord() {
         bool wroteResult = false;
 
         try {
-            WriteVerbose($"Show-Type input: {InputObject?.GetType()?.FullName}");
+            string? inputFullName = InputObject?.BaseObject?.GetType()?.FullName;
+            string inputShortName = inputFullName is null ? string.Empty : inputFullName.Split('`', 2)[0];
+            WriteVerbose($"Show-Type input: {inputShortName}");
             object? resolvedInput = InputObject;
             if (PowerShellCommandResolver.TryGetCommandInfo(this, InputObject, out CommandInfo? resolvedCommand) && resolvedCommand is not null)
                 resolvedInput = resolvedCommand;
 
             if (string.IsNullOrEmpty(MethodName) && TryResolveTypeInput(resolvedInput!, out Type? resolvedType) && resolvedType is not null) {
                 string assemblyPath = ResolveAssemblyPath(resolvedType);
-                string? source = MetadataOnly.IsPresent
-                    ? null
-                    : ILSpyDecompiler.DecompileType(assemblyPath, new FullTypeName(GetFullTypeName(resolvedType)));
+                string? source = ILSpyDecompiler.DecompileType(assemblyPath, new FullTypeName(GetFullTypeName(resolvedType)));
                 WriteDecompiledOutput(null, assemblyPath, source, resolvedType.FullName);
                 WriteVerbose($"Show-Type resolved type: {resolvedType.FullName}");
                 wroteResult = true;
@@ -99,9 +94,7 @@ public class ShowTypeCmdlet : PSCmdlet {
                     if (entry.Value.Count == 0)
                         continue;
 
-                    string? source = MetadataOnly.IsPresent
-                        ? null
-                        : ILSpyDecompiler.DecompileMethods(entry.Value);
+                    string? source = ILSpyDecompiler.DecompileMethods(entry.Value);
 
                     var result = new ISpyDecompilationResult {
                         AssemblyPath = entry.Key,
@@ -112,16 +105,9 @@ public class ShowTypeCmdlet : PSCmdlet {
                         MetadataTokens = [.. tokensByAssembly[entry.Key]]
                     };
 
-                    if (ShouldEmitMetadata()) {
-                        if (MetadataOnly.IsPresent) {
-                            result.Source = null;
-                            WriteObject(result);
-                            continue;
-                        }
-
+                    if (Metadata.IsPresent) {
                         WriteObject(result);
-                        if (!string.IsNullOrEmpty(source))
-                            WriteObject(SourceOutputFactory.CreateFromTypeName(source, entry.Value[0].DeclaringType?.FullName));
+
                     }
                     else if (!string.IsNullOrEmpty(source)) {
                         WriteObject(SourceOutputFactory.CreateFromTypeName(source, entry.Value[0].DeclaringType?.FullName));
@@ -172,9 +158,7 @@ public class ShowTypeCmdlet : PSCmdlet {
         }
 
         if (string.IsNullOrEmpty(MethodName)) {
-            string? source = MetadataOnly.IsPresent
-                ? null
-                : ILSpyDecompiler.DecompileType(resolvedAssembly, new FullTypeName(TypeName));
+            string? source = ILSpyDecompiler.DecompileType(resolvedAssembly, new FullTypeName(TypeName));
             WriteDecompiledOutput(null, resolvedAssembly, source, TypeName);
             return true;
         }
@@ -216,9 +200,7 @@ public class ShowTypeCmdlet : PSCmdlet {
     }
 
     private void WriteResolvedMethod(ResolvedMethodTarget resolved) {
-        string? source = MetadataOnly.IsPresent
-            ? null
-            : ILSpyDecompiler.DecompileMethod(resolved.Method);
+        string? source = ILSpyDecompiler.DecompileMethod(resolved.Method);
 
         var result = new ISpyDecompilationResult {
             AssemblyPath = resolved.AssemblyPath,
@@ -229,20 +211,11 @@ public class ShowTypeCmdlet : PSCmdlet {
             MetadataTokens = [resolved.Method.MetadataToken]
         };
 
-        if (ShouldEmitMetadata()) {
-            if (MetadataOnly.IsPresent) {
-                result.Source = null;
-                WriteObject(result);
-                return;
-            }
-
+        if (Metadata.IsPresent) {
             WriteObject(result);
-            if (!string.IsNullOrEmpty(source))
-                WriteObject(SourceOutputFactory.CreateFromTypeName(source, resolved.Method.DeclaringType?.FullName));
             return;
         }
 
-        // Default: emit source string for piping
         if (!string.IsNullOrEmpty(source))
             WriteObject(SourceOutputFactory.CreateFromTypeName(source, resolved.Method.DeclaringType?.FullName));
     }
@@ -257,20 +230,11 @@ public class ShowTypeCmdlet : PSCmdlet {
             MetadataTokens = method is null ? null : [method.MetadataToken]
         };
 
-        if (ShouldEmitMetadata()) {
-            if (MetadataOnly.IsPresent) {
-                result.Source = null;
-                WriteObject(result);
-                return;
-            }
-
+        if (Metadata.IsPresent) {
             WriteObject(result);
-            if (!string.IsNullOrEmpty(result.Source))
-                WriteObject(SourceOutputFactory.CreateFromTypeName(result.Source, declaringTypeHint));
             return;
         }
 
-        // Default: emit source string for piping
         if (!string.IsNullOrEmpty(result.Source))
             WriteObject(SourceOutputFactory.CreateFromTypeName(result.Source, declaringTypeHint));
     }
@@ -308,9 +272,6 @@ public class ShowTypeCmdlet : PSCmdlet {
                 resolvedType = cmdlet.ImplementingType;
                 return true;
             }
-            // if (command is FunctionInfo or FilterInfo or ScriptInfo) {
-            //     resolvedType = command.Ast.ScriptBlock;
-            // }
         }
 
         return false;
@@ -343,6 +304,4 @@ public class ShowTypeCmdlet : PSCmdlet {
         }
     }
 
-    private bool ShouldEmitMetadata()
-        => EmitMetadata.IsPresent || MetadataOnly.IsPresent;
 }

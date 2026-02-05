@@ -7,7 +7,6 @@ public class ISpyDecompilationResult {
     public string? FilePath { get; set; }
     public string? Source { get; set; }
     public string? Message { get; set; }
-    public bool IncludeDebugInfo { get; set; }
     public string[]? MethodNames { get; set; }
     public int[]? MetadataTokens { get; set; }
 }

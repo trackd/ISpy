@@ -11,16 +11,12 @@ public class GetDependencyCmdlet : PSCmdlet {
         HelpMessage = "Path to the assembly file to analyze")]
     [ValidateNotNullOrEmpty]
     [Alias("AssemblyPath", "PSPath")]
-    public required string Path { get; set; }
+    public string? Path { get; set; }
 
     [Parameter(
         Mandatory = false,
-        HelpMessage = "Include detailed version information")]
-    public SwitchParameter IncludeVersionDetails { get; set; }
-
-    [Parameter(
-        Mandatory = false,
-        HelpMessage = "Only show external dependencies (exclude self-references)")]
+        HelpMessage = "Only show external dependencies (exclude self-references)"
+    )]
     public SwitchParameter ExternalOnly { get; set; }
 
     protected override void ProcessRecord() {
@@ -65,13 +61,9 @@ public class GetDependencyCmdlet : PSCmdlet {
                 var dependencyInfo = new ISpyDependencyInfo {
                     Name = name,
                     FullName = $"{name}, Version={version}, Culture={culture}, PublicKeyToken={publicKeyOrToken}",
-                    Version = version.ToString(),
+                    Version = version,
                     Culture = culture,
                     PublicKeyToken = publicKeyOrToken,
-                    MajorVersion = IncludeVersionDetails.IsPresent ? version.Major : 0,
-                    MinorVersion = IncludeVersionDetails.IsPresent ? version.Minor : 0,
-                    BuildNumber = IncludeVersionDetails.IsPresent ? version.Build : 0,
-                    RevisionNumber = IncludeVersionDetails.IsPresent ? version.Revision : 0
                 };
 
                 WriteObject(dependencyInfo);

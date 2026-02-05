@@ -2,7 +2,7 @@
 
 namespace ISpy.Utilities;
 
-public static class TypesParser {
+internal static class TypesParser {
     public static HashSet<TypeKind> ParseSelection(string[] values) {
         var possibleValues = new Dictionary<string, TypeKind>(StringComparer.OrdinalIgnoreCase) {
             ["class"] = TypeKind.Class,

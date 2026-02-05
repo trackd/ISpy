@@ -22,8 +22,8 @@
         <AnalysisLevel>latest-Recommended</AnalysisLevel>
     </PropertyGroup>
     <ItemGroup>
-        <!-- <PackageReference Include="System.Management.Automation" Version="7.4" PrivateAssets="all" /> -->
-        <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
+        <PackageReference Include="System.Management.Automation" Version="7.4" PrivateAssets="all" />
+        <!-- <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" /> -->
         <PackageReference Include="ICSharpCode.Decompiler" Version="9.1.0.7988" />
         <PackageReference Include="Roslynator.Analyzers" Version="4.*">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

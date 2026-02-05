@@ -1,6 +1,6 @@
 @{
     # Module manifest for ISpy
-    RootModule             = 'lib\ISpy.dll'
+    RootModule             = 'lib/ISpy.dll'
     ModuleVersion          = '0.1.0'
     GUID                   = '15ad5935-21a2-4eed-aeec-2232c7507dc2'
     Author                 = 'trackd'
@@ -21,13 +21,14 @@
     CmdletsToExport        = @(
         'Get-DecompiledSource'
         'Get-AssemblyInfo'
-        'Get-Type'
-        'Get-Method'
+        # 'Get-Type'
+        # 'Get-Method'
         'Get-Dependency'
         'Get-Decompiler'
         'Export-DecompiledSource'
-        'Find-Type'
+        # 'Find-Type'
         'Show-Type'
+        'Get-Framework'
     )
     VariablesToExport      = @()
     AliasesToExport        = @()

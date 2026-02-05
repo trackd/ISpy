@@ -105,6 +105,12 @@ task Test -if (-not $SkipTests) {
     $pesterConfig.Debug.WriteDebugMessages = $false
     Invoke-Pester -Configuration $pesterConfig
 }
+task CleanAfter {
+    if ($script:config.DestinationPath -and (Test-Path $script:config.DestinationPath)) {
+        Get-ChildItem $script:config.DestinationPath -File | Where-Object { $_.Extension -in '.pdb', '.json' } | Remove-Item -Force -ErrorAction Ignore
+    }
+}
 
-task All -Jobs Clean, Build, ModuleFiles, GenerateHelp #, Test
-task BuildAndTest -Jobs Clean, Build, ModuleFiles #, Test
+
+task All -Jobs Clean, Build, ModuleFiles, GenerateHelp, CleanAfter #, Test
+task BuildAndTest -Jobs Clean, Build, ModuleFiles, CleanAfter #, Test

@@ -18,7 +18,7 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
         Position = 1,
         HelpMessage = "Output directory path")]
     [ValidateNotNullOrEmpty]
-    public required string OutputDirectory { get; set; }
+    public string? OutputPath { get; set; }
 
     [Parameter(
         Mandatory = false,
@@ -57,7 +57,7 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
                 return;
             }
 
-            string resolvedOutputDir = GetUnresolvedProviderPathFromPSPath(OutputDirectory);
+            string resolvedOutputDir = GetUnresolvedProviderPathFromPSPath(OutputPath);
             if (!Directory.Exists(resolvedOutputDir)) {
                 WriteVerbose($"Creating output directory: {resolvedOutputDir}");
                 Directory.CreateDirectory(resolvedOutputDir);

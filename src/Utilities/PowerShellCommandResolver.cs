@@ -55,11 +55,11 @@ internal static class PowerShellCommandResolver {
         command = ResolveAlias(command);
 
         if (command is FunctionInfo functionInfo)
-            scriptText = functionInfo.ScriptBlock?.ToString();
+            scriptText = functionInfo.ScriptBlock.Ast.Extent.Text;
         else if (command is FilterInfo filterInfo)
-            scriptText = filterInfo.ScriptBlock?.ToString();
+            scriptText = filterInfo.ScriptBlock.Ast.Extent.Text;
         else if (command is ScriptInfo scriptInfo)
-            scriptText = scriptInfo.ScriptBlock?.ToString();
+            scriptText = scriptInfo.ScriptBlock.Ast.Extent.Text;
         else
             return false;
 
