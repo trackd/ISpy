@@ -1,7 +1,7 @@
 @{
     # Module manifest for ISpy
     RootModule             = 'lib/ISpy.dll'
-    ModuleVersion          = '0.1.0'
+    ModuleVersion          = '0.2.0'
     GUID                   = '15ad5935-21a2-4eed-aeec-2232c7507dc2'
     Author                 = 'trackd'
     CompanyName            = 'trackd'
@@ -15,7 +15,7 @@
     RequiredAssemblies     = @()
     ScriptsToProcess       = @()
     TypesToProcess         = @()
-    FormatsToProcess       = @()
+    FormatsToProcess       = @('ISpy.Format.ps1xml')
     NestedModules          = @()
     FunctionsToExport      = @()
     CmdletsToExport        = @(
@@ -23,9 +23,11 @@
         'Export-DecompiledSource'
         'Get-AssemblyInfo'
         'Get-DecompiledSource'
-        'Get-Decompiler'
         'Get-Dependency'
         'Get-Type'
+        'New-Decompiler'
+        'New-DecompilerFormattingOption'
+        'New-DecompilerSetting'
     )
     VariablesToExport      = @()
     AliasesToExport        = @(
@@ -41,13 +43,13 @@
     PrivateData            = @{
         PSData = @{
             Tags                       = @('ILSpy', 'Decompiler', 'c#', 'dotnet', 'Assembly', 'Analysis')
-            LicenseUri                 = ''
+            LicenseUri                 = 'https://github.com/trackd/ISpy/blob/main/LICENSE'
             ProjectUri                 = 'https://github.com/trackd/ISpy'
-            IconUri                    = ''
-            ReleaseNotes               = ''
-            ExternalModuleDependencies = @()
-            Prerelease                 = ''
+            # IconUri                    = ''
+            # ReleaseNotes               = ''
+            # ExternalModuleDependencies = @()
+            # Prerelease                 = ''
         }
     }
-    HelpInfoURI            = ''
+    HelpInfoURI            = 'https://github.com/trackd/ISpy/tree/main/docs/en-us'
 }

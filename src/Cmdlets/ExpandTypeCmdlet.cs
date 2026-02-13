@@ -7,7 +7,7 @@ namespace ISpy.Cmdlets;
 [OutputType(typeof(string))]
 [OutputType(typeof(ISpyDecompilationResult))]
 [Alias("ent")]
-public class ShowTypeCmdlet : PSCmdlet {
+public class ExpandTypeCmdlet : PSCmdlet {
     [Parameter(
         Position = 0,
         ValueFromPipeline = true,
@@ -59,7 +59,7 @@ public class ShowTypeCmdlet : PSCmdlet {
                 wroteResult = true;
             }
 
-            if (!wroteResult && PowerShellCommandResolver.TryGetScriptText(resolvedInput, out string? scriptText, out string? commandName)) {
+            if (!wroteResult && PowerShellCommandResolver.TryGetScriptText(this, resolvedInput, out string? scriptText, out string? commandName)) {
                 WriteObject(SourceOutputFactory.Create(scriptText!, commandName ?? "script", ".ps1"));
                 return;
             }
@@ -110,7 +110,7 @@ public class ShowTypeCmdlet : PSCmdlet {
 
                     }
                     else if (!string.IsNullOrEmpty(source)) {
-                        WriteObject(SourceOutputFactory.CreateFromTypeName(source, entry.Value[0].DeclaringType?.FullName));
+                        WriteObject(SourceOutputFactory.CreateFromTypeName(source, entry.Value[0].DeclaringType?.FullName, assemblyPath: entry.Key, method: entry.Value[0]));
                     }
 
                     wroteResult = true;
@@ -133,6 +133,11 @@ public class ShowTypeCmdlet : PSCmdlet {
             if (!wroteResult) {
                 WriteVerbose("Show-Type did not locate a method to decompile.");
             }
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteError(new ErrorRecord(
@@ -217,7 +222,7 @@ public class ShowTypeCmdlet : PSCmdlet {
         }
 
         if (!string.IsNullOrEmpty(source))
-            WriteObject(SourceOutputFactory.CreateFromTypeName(source, resolved.Method.DeclaringType?.FullName));
+            WriteObject(SourceOutputFactory.CreateFromTypeName(source, resolved.Method.DeclaringType?.FullName, assemblyPath: resolved.AssemblyPath, method: resolved.Method));
     }
 
     private void WriteDecompiledOutput(MethodBase? method, string assemblyPath, string? source, string? declaringTypeHint) {
@@ -236,7 +241,7 @@ public class ShowTypeCmdlet : PSCmdlet {
         }
 
         if (!string.IsNullOrEmpty(result.Source))
-            WriteObject(SourceOutputFactory.CreateFromTypeName(result.Source, declaringTypeHint));
+            WriteObject(SourceOutputFactory.CreateFromTypeName(result.Source, declaringTypeHint, assemblyPath: assemblyPath));
     }
 
     private string GetResolvedAssemblyPath(string candidate) {

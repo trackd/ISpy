@@ -1,7 +1,7 @@
 BeforeAll {
-    $ModulePath = "$PSScriptRoot\..\output\ISpy.psd1"
-    Import-Module $ModulePath -Force
-
+    if (-not (Get-Module ISpy)) {
+        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+    }
     $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
 }
@@ -13,7 +13,7 @@ Describe "Get-AssemblyInfo cmdlet" {
         $result | Should -Not -BeNull
         $result.FullName | Should -Not -BeNullOrEmpty
         $result.FilePath | Should -Be $Script:TestAssembly
-        $result.TypeCount | Should -BeGreaterThan 0
+        $result.Types | Should -BeGreaterThan 0
     }
 
     It "Get-AssemblyInfo_PipelineInput_ReturnsSameFilePath" {

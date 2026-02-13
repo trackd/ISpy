@@ -15,7 +15,7 @@ Decompiles .NET assemblies or specific types to readable C# source code using th
 
 ```powershell
 Get-DecompiledSource [-Path] <String> [[-TypeName] <String>] [-OutputPath <String>]
- [-Settings <DecompilerSettings>] [<CommonParameters>]
+ [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -48,6 +48,15 @@ PS C:\> Get-DecompiledSource -Path "$PSHOME/Humanizer.dll"
 
 This command decompiles every type in `Humanizer.dll`
 
+### Example 4: Reuse a custom decompiler
+
+```powershell
+PS C:\> $decompiler = Get-Decompiler -Path "MyLibrary.dll"
+PS C:\> Get-DecompiledSource -Path "MyLibrary.dll" -TypeName 'MyCompany.Core.Service' -Decompiler $decompiler
+```
+
+This command uses a pre-created decompiler instance.
+
 ## PARAMETERS
 
 ### -Path
@@ -69,6 +78,28 @@ Full name of a specific type to decompile.
 Type: String
 Required: False
 Position: 1
+Accept pipeline input: False
+```
+
+### -Settings
+
+Custom decompiler settings used when creating a decompiler.
+
+```yaml
+Type: DecompilerSettings
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -Decompiler
+
+Custom `CSharpDecompiler` instance to use directly.
+
+```yaml
+Type: CSharpDecompiler
+Required: False
+Position: Named
 Accept pipeline input: False
 ```
 

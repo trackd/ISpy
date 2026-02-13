@@ -11,7 +11,7 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
         ValueFromPipelineByPropertyName = true,
         HelpMessage = "Path to the assembly file to decompile")]
     [ValidateNotNullOrEmpty]
-    [Alias("AssemblyPath", "PSPath")]
+    [Alias("AssemblyPath", "PSPath", "FilePath")]
     public string? Path { get; set; }
 
     [Parameter(
@@ -43,6 +43,11 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
     [Parameter(
         Mandatory = false,
+        HelpMessage = "Custom CSharpDecompiler instance to use instead of creating one from path/settings.")]
+    public CSharpDecompiler? Decompiler { get; set; }
+
+    [Parameter(
+        Mandatory = false,
         HelpMessage = "Overwrite existing files")]
     public SwitchParameter Force { get; set; }
 
@@ -66,8 +71,7 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
             WriteVerbose($"Loading assembly: {resolvedAssembly}");
 
-            DecompilerSettings decompilerSettings = Settings ?? new DecompilerSettings();
-            var decompiler = new CSharpDecompiler(resolvedAssembly, decompilerSettings);
+            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedAssembly, Settings ?? new DecompilerSettings());
 
             int exportedFiles = 0;
             int skippedFiles = 0;
@@ -133,6 +137,11 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
             }
 
             WriteVerbose($"Export completed. Files exported: {exportedFiles}, Files skipped: {skippedFiles}");
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteError(new ErrorRecord(

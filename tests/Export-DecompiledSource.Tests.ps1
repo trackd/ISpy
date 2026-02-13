@@ -1,7 +1,7 @@
 BeforeAll {
-    $ModulePath = "$PSScriptRoot\..\output\ISpy.psd1"
-    Import-Module $ModulePath -Force
-
+    if (-not (Get-Module ISpy)) {
+        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+    }
     # Use a small local assembly (ICSharpCode.Decompiler) to keep decompilation fast
     $Script:TestAssembly = "$PSScriptRoot\..\output\lib\ICSharpCode.Decompiler.dll"
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
@@ -60,6 +60,16 @@ Describe 'ExportDecompiledSource cmdlet' {
             $secondFiles = Get-ChildItem $Script:TestOutputDir -Filter '*.cs' -File -Recurse
             $secondFiles.Count | Should -Be $secondCount
 
+        }
+
+        It "Export-DecompiledSource_CustomDecompiler_UsesProvidedDecompiler" {
+            $typeName1 = 'ICSharpCode.Decompiler.CSharp.CSharpDecompiler'
+            $decompiler = New-Decompiler -Path $Script:TestAssembly
+
+            $result = Export-DecompiledSource -Path $script:TestAssembly -OutputPath $Script:TestOutputDir -TypeNames $typeName1 -Decompiler $decompiler
+
+            $result | Should -Not -BeNull
+            ($result | Where-Object Success -eq $true).Count | Should -BeGreaterThan 0
         }
     }
 

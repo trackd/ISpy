@@ -1,7 +1,7 @@
 BeforeAll {
-    $ModulePath = "$PSScriptRoot\..\output\ISpy.psd1"
-    Import-Module $ModulePath -Force
-
+    if (-not (Get-Module ISpy)) {
+        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+    }
     $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
 
@@ -34,6 +34,14 @@ Describe "Get-Type cmdlet" {
 
         $results | Should -Not -BeNullOrEmpty
     }
+
+    It "Get-Type_CustomDecompiler_UsesProvidedDecompiler" {
+        $decompiler = New-Decompiler -Path $Script:TestAssembly
+        $results = Get-Type -Path $Script:TestAssembly -Decompiler $decompiler -PublicOnly -TypeKind 'Class'
+
+        $results | Should -Not -BeNullOrEmpty
+    }
+
     It 'Should have Help and examples' {
         $help = Get-Help Get-Type -Full
         $help.Synopsis | Should -Not -BeNullOrEmpty

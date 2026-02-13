@@ -1,15 +1,15 @@
 namespace ISpy.Cmdlets;
 
-[Cmdlet(VerbsCommon.Get, "Decompiler")]
+[Cmdlet(VerbsCommon.New, "Decompiler")]
 [OutputType(typeof(CSharpDecompiler))]
-public class GetDecompilerCmdlet : PSCmdlet {
+public class NewDecompilerCmdlet : PSCmdlet {
     [Parameter(
         Position = 0,
         Mandatory = true,
         ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
         HelpMessage = "Path to the assembly you want to decompile")]
-    [Alias("PSPath", "AssemblyPath")]
+    [Alias("PSPath", "AssemblyPath", "FilePath")]
     [ValidateNotNullOrEmpty]
     public string? Path { get; set; }
 
@@ -25,6 +25,9 @@ public class GetDecompilerCmdlet : PSCmdlet {
     [Parameter(HelpMessage = "Path to PDB file for debug information")]
     [ValidateNotNullOrEmpty]
     public string? PDBFilePath { get; set; }
+
+    [Parameter]
+    public DecompilerSettings? DecompilerSettings { get; set; }
 
     protected override void ProcessRecord() {
         try {
@@ -54,18 +57,21 @@ public class GetDecompilerCmdlet : PSCmdlet {
 
             WriteVerbose($"Creating decompiler for assembly: {resolvedPath}");
 
-            using var fileStream = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read);
-            var module = new PEFile(resolvedPath, fileStream, PEStreamOptions.Default);
-
-            var decompiler = new CSharpDecompiler(resolvedPath, new DecompilerSettings(LanguageVersion) {
+            DecompilerSettings settings = DecompilerSettings ?? new DecompilerSettings(LanguageVersion) {
                 ThrowOnAssemblyResolveErrors = false,
                 RemoveDeadCode = RemoveDeadCode.IsPresent,
                 RemoveDeadStores = RemoveDeadStores.IsPresent,
                 UseDebugSymbols = false,
                 ShowDebugInfo = false,
-            });
+            };
 
+            CSharpDecompiler decompiler = DecompilerFactory.Create(resolvedPath, settings);
             WriteObject(decompiler);
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteVerbose(ex.ToString());

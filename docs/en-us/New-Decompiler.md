@@ -5,7 +5,7 @@ online version: https://github.com/trackd/ISpy/blob/main/docs/en-US
 schema: 2.0.0
 ---
 
-# Get-Decompiler
+# New-Decompiler
 
 ## SYNOPSIS
 
@@ -14,20 +14,20 @@ Creates a configured CSharpDecompiler instance for advanced decompilation scenar
 ## SYNTAX
 
 ```powershell
-Get-Decompiler [-Path] <String> [-LanguageVersion <LanguageVersion>] [-RemoveDeadStores] 
+New-Decompiler [-Path] <String> [-LanguageVersion <LanguageVersion>] [-RemoveDeadStores] 
  [-RemoveDeadCode] [-PDBFilePath <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-The `Get-Decompiler` cmdlet creates and configures a `CSharpDecompiler` instance that can be used for advanced decompilation scenarios. This cmdlet is useful when you need fine-grained control over the decompilation process or want to reuse a decompiler instance across multiple operations.
+The `New-Decompiler` cmdlet creates and configures a `CSharpDecompiler` instance that can be used for advanced decompilation scenarios. This cmdlet is useful when you need fine-grained control over the decompilation process or want to reuse a decompiler instance across multiple operations.
 
 ## EXAMPLES
 
 ### Example 1: Create a decompiler for an assembly
 
 ```powershell
-PS C:\> Get-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll'
+PS C:\> New-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll'
 ```
 
 This command creates a CSharpDecompiler instance for the specified assembly.  
@@ -35,7 +35,7 @@ This command creates a CSharpDecompiler instance for the specified assembly.
 ### Example 2: Specify a language version
 
 ```powershell
-PS C:\> Get-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll' -LanguageVersion CSharp10
+PS C:\> New-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll' -LanguageVersion CSharp10
 ```
 
 This command creates a decompiler using C# 10 syntax.  
@@ -43,7 +43,7 @@ This command creates a decompiler using C# 10 syntax.
 ### Example 3: Remove dead code and stores
 
 ```powershell
-PS C:\> Get-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll' -RemoveDeadCode -RemoveDeadStores
+PS C:\> New-Decompiler -Path './output/lib/ICSharpCode.Decompiler.dll' -RemoveDeadCode -RemoveDeadStores
 ```
 
 This command configures the decompiler to remove dead code and stores.  
@@ -113,9 +113,9 @@ Returns a configured `CSharpDecompiler` instance.
 
 ## NOTES
 
-- Use with Get-Framework or Get-DecompiledSource for advanced scenarios.
+- Use with Export-DecompileSource or Get-DecompiledSource for advanced scenarios.
 
 ## RELATED LINKS
 
 [Get-DecompiledSource](Get-DecompiledSource.md)
-[Get-DecompilerVersion](Get-DecompilerVersion.md)
+[New-DecompilerVersion](New-DecompilerVersion.md)

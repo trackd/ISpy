@@ -1,6 +1,7 @@
 BeforeAll {
-    $ModulePath = "$PSScriptRoot\..\output\ISpy.psd1"
-    Import-Module $ModulePath -Force
+    if (-not (Get-Module ISpy)) {
+        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+    }
     function helloworld {
         <#
         .DESCRIPTION
@@ -27,11 +28,11 @@ Describe 'Expand-Type cmdlet' {
         $result.MethodNames | Should -Contain "Truncate"
     }
     It "Decompile CommandInfo" {
-        $up = Get-Command Get-Decompiler | Expand-Type
+        $up = Get-Command New-Decompiler | Expand-Type
         $up | Should -Not -BeNull
         $up | Should -BeOfType System.String
-        $up | Should -Match "GetDecompilerCmdlet"
-        $up.PSChildName | Should -Be "GetDecompilerCmdlet.cs"
+        $up | Should -Match "NewDecompilerCmdlet"
+        $up.PSChildName | Should -Be "NewDecompilerCmdlet.cs"
     }
     It "Decompile Locally Defined Function" {
         $f = Expand-Type 'helloworld'

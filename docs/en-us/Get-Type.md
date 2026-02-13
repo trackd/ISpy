@@ -14,7 +14,7 @@ Retrieves detailed type metadata from a .NET assembly with flexible filtering an
 ## SYNTAX
 
 ```powershell
-Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-TypeKinds <TypeKind[]>] [-IncludeCompilerGenerated] [<CommonParameters>]
+Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-TypeKinds <TypeKind[]>] [-IncludeCompilerGenerated] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -48,6 +48,15 @@ PS C:\> Get-Type -Path "MyLibrary.dll" -PublicOnly -TypeKind Enum | Select-Objec
 ```
 
 This command streams public enum types and selects `FullName` and `Kind` for concise output.
+
+### Example 4: Reuse a custom decompiler
+
+```powershell
+PS C:\> $decompiler = Get-Decompiler -Path "MyLibrary.dll"
+PS C:\> Get-Type -Path "MyLibrary.dll" -Decompiler $decompiler -PublicOnly
+```
+
+This command reuses a pre-created decompiler instance.
 
 ## PARAMETERS
 
@@ -118,6 +127,28 @@ Include compiler-generated types
 
 ```yaml
 Type: SwitchParameter
+Position: Named
+Required: False
+Accept pipeline input: False
+```
+
+### -Settings
+
+Custom decompiler settings used when constructing a decompiler.
+
+```yaml
+Type: DecompilerSettings
+Position: Named
+Required: False
+Accept pipeline input: False
+```
+
+### -Decompiler
+
+Custom `CSharpDecompiler` instance to use directly.
+
+```yaml
+Type: CSharpDecompiler
 Position: Named
 Required: False
 Accept pipeline input: False

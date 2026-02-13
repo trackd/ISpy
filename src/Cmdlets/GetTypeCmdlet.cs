@@ -10,7 +10,7 @@ public class GetTypeCmdlet : PSCmdlet {
         ValueFromPipelineByPropertyName = true,
         HelpMessage = "Path to the assembly file to analyze"
     )]
-    [Alias("AssemblyPath", "PSPath")]
+    [Alias("AssemblyPath", "PSPath", "FilePath")]
     [ValidateNotNullOrEmpty]
     public string? Path { get; set; }
 
@@ -32,6 +32,9 @@ public class GetTypeCmdlet : PSCmdlet {
     [Parameter(HelpMessage = "Custom decompiler settings to influence type resolution")]
     public DecompilerSettings? Settings { get; set; }
 
+    [Parameter(HelpMessage = "Custom CSharpDecompiler instance to use instead of creating one from path/settings")]
+    public CSharpDecompiler? Decompiler { get; set; }
+
     protected override void ProcessRecord() {
         string? resolvedPath = ResolveAssemblyPath(Path);
         if (resolvedPath is null)
@@ -40,20 +43,30 @@ public class GetTypeCmdlet : PSCmdlet {
         try {
             WriteVerbose($"Enumerating types from: {resolvedPath}");
 
-            DecompilerSettings settings = Settings ?? new DecompilerSettings();
-            var decompiler = new CSharpDecompiler(resolvedPath, settings);
+            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
+                ThrowOnAssemblyResolveErrors = false,
+                UseDebugSymbols = false,
+                ShowDebugInfo = false,
+                UsingDeclarations = true,
+            });
             WildcardPattern? nameMatcher = BuildNameMatcher();
 
             foreach (ITypeDefinition? type in FilterTypes(decompiler.TypeSystem.MainModule.TypeDefinitions, Typekind, nameMatcher)) {
                 WriteObject(CreateTypeInfo(type));
             }
         }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
+        }
         catch (Exception ex) {
             WriteError(new ErrorRecord(
                 ex,
                 "TypeEnumerationFailed",
                 ErrorCategory.InvalidOperation,
-                resolvedPath));
+                resolvedPath)
+            );
         }
     }
     private WildcardPattern? BuildNameMatcher()

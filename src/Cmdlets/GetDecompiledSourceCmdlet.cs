@@ -12,7 +12,7 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
         HelpMessage = "Path to the assembly file to decompile. Can be a DLL, EXE, or any valid .NET assembly format."
     )]
     [ValidateNotNullOrEmpty]
-    [Alias("AssemblyPath", "PSPath")]
+    [Alias("AssemblyPath", "PSPath", "FilePath")]
     public string? Path { get; set; }
 
     [Parameter(
@@ -28,6 +28,12 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
     )]
     public DecompilerSettings? Settings { get; set; }
 
+    [Parameter(
+        Mandatory = false,
+        HelpMessage = "Custom CSharpDecompiler instance to use instead of creating one from path/settings."
+    )]
+    public CSharpDecompiler? Decompiler { get; set; }
+
     protected override void ProcessRecord() {
         try {
             string resolvedPath = GetUnresolvedProviderPathFromPSPath(Path);
@@ -42,8 +48,12 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
 
             WriteVerbose($"Loading assembly: {resolvedPath}");
 
-            DecompilerSettings decompilerSettings = Settings ?? new DecompilerSettings();
-            var decompiler = new CSharpDecompiler(resolvedPath, decompilerSettings);
+            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
+                ThrowOnAssemblyResolveErrors = false,
+                UseDebugSymbols = false,
+                ShowDebugInfo = false,
+                UsingDeclarations = true,
+            });
 
             if (!string.IsNullOrEmpty(TypeName)) {
                 // Decompile a specific type
@@ -68,6 +78,11 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
                 }
                 WriteObject(results, true);
             }
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteError(new ErrorRecord(

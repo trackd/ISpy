@@ -14,7 +14,7 @@ Analyzes and lists assembly dependencies and references.
 ## SYNTAX
 
 ```powershell
-Get-Dependency [-Path] <String> [-IncludeVersionDetails] [-ExternalOnly] [<CommonParameters>]
+Get-Dependency [-Path] <String> [-ExternalOnly] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -39,14 +39,6 @@ PS C:\> Get-Dependency -Path './lib/MyLibrary.dll' -ExternalOnly
 
 This command lists only external references (skips self-references) for `MyLibrary.dll`.  
 
-### Example 3: Include version details for each referenced assembly
-
-```powershell
-PS C:\> Get-Dependency -Path './lib/MyLibrary.dll' -IncludeVersionDetails
-```
-
-This command includes version and full assembly name details for each referenced assembly.  
-
 ## PARAMETERS
 
 ### -Path
@@ -58,16 +50,6 @@ Type: String
 Required: True
 Position: 0
 Accept pipeline input: True (ByPropertyName, ByValue)
-```
-
-### -IncludeVersionDetails
-
-Include version and full name details for each referenced assembly.
-
-```yaml
-Type: SwitchParameter
-Required: False
-Position: Named
 ```
 
 ### -ExternalOnly
@@ -91,7 +73,6 @@ System.String — accepts assembly file paths from the pipeline.
 ## NOTES
 
 - Use `-ExternalOnly` to filter out self-references.
-- Use `-IncludeVersionDetails` for full assembly name and version info.
 
 ## RELATED LINKS
 

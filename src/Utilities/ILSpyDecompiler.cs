@@ -75,7 +75,7 @@ internal static class ILSpyDecompiler {
             UsingDeclarations = useUsingDeclarations,
         };
 
-        return new CSharpDecompiler(assemblyPath, settings);
+        return DecompilerFactory.Create(assemblyPath, settings);
     }
 
 }

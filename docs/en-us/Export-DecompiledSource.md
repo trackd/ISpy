@@ -15,7 +15,7 @@ Exports decompiled C# source code from .NET assemblies to organized file structu
 
 ```powershell
 Export-DecompiledSource [-Path] <String> [-OutputDirectory] <String> [-TypeNames <String[]>]
- [-Namespace <String>] [-CreateNamespaceDirectories] [-Settings <DecompilerSettings>] [-Force]
+ [-Namespace <String>] [-CreateNamespaceDirectories] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [-Force]
  [<CommonParameters>]
 ```
 
@@ -51,6 +51,15 @@ PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Dec
 ```
 
 This command creates directories matching each type's namespace and overwrites any existing files in the target directory.
+
+### Example 4: Export with a custom decompiler instance
+
+```powershell
+PS C:\> $decompiler = Get-Decompiler -Path "$PSHOME/Humanizer.dll"
+PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Decompiled" -TypeNames @('Humanizer.NumberToWordsExtension') -Decompiler $decompiler
+```
+
+This command reuses a pre-created decompiler to export selected types.
 
 ## PARAMETERS
 
@@ -100,6 +109,28 @@ Position: Named
 Default value: All types in assembly
 Accept pipeline input: False
 Accept wildcard characters: False
+```
+
+### -Settings
+
+Custom `DecompilerSettings` used when creating a decompiler.
+
+```yaml
+Type: DecompilerSettings
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -Decompiler
+
+Custom `CSharpDecompiler` instance to use directly.
+
+```yaml
+Type: CSharpDecompiler
+Required: False
+Position: Named
+Accept pipeline input: False
 ```
 
 ## INPUTS

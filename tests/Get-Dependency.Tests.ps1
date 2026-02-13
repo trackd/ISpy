@@ -1,7 +1,7 @@
 BeforeAll {
-    $ModulePath = "$PSScriptRoot\..\output\ISpy.psd1"
-    Import-Module $ModulePath -Force
-
+    if (-not (Get-Module ISpy)) {
+        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+    }
     $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
 }

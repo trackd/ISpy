@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Management.Automation;
-using System.Reflection;
-
-namespace ISpy.Utilities;
+﻿namespace ISpy.Utilities;
 
 internal sealed record ResolvedMethodTarget(MethodBase Method, string AssemblyPath);
 

@@ -12,7 +12,7 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
         ValueFromPipelineByPropertyName = true,
         HelpMessage = "Path to the assembly file to analyze")]
     [ValidateNotNullOrEmpty]
-    [Alias("AssemblyPath", "PSPath")]
+    [Alias("AssemblyPath", "PSPath", "FilePath")]
     public string? Path { get; set; }
 
     protected override void ProcessRecord() {
@@ -32,9 +32,7 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
         string culture = "neutral";
         string publicKeyToken = "null";
         string processorArchitecture = "Unknown";
-        int moduleCount = 1;
         bool hasEntryPoint = false;
-        string? entryPoint = null;
         string targetFramework = "Unknown";
         string assemblyFullName = System.IO.Path.GetFileName(resolvedPath) ?? "Unknown";
         string assemblySimpleName = assemblyFullName;
@@ -102,7 +100,7 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
                         BlobHandle valueBlob = attr.Value;
                         BlobReader blobReader = mdReader.GetBlobReader(valueBlob);
                         // Skip prolog (2 bytes)
-                        blobReader.ReadUInt16();
+                        _ = blobReader.ReadUInt16();
                         string? tfm = blobReader.ReadSerializedString();
                         if (!string.IsNullOrEmpty(tfm)) {
                             targetFramework = tfm;
@@ -116,6 +114,11 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
                 }
                 catch { typeCount = 0; }
             }
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteVerbose($"Could not read PE headers or metadata for '{resolvedPath}': {ex.Message}");
@@ -132,10 +135,8 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
             Culture = culture,
             PublicKeyToken = publicKeyToken,
             ProcessorArchitecture = processorArchitecture,
-            ModuleCount = moduleCount,
-            TypeCount = typeCount,
+            Types = typeCount,
             HasEntryPoint = hasEntryPoint,
-            EntryPoint = entryPoint,
             TargetFramework = targetFramework,
             FilePath = resolvedPath
         };

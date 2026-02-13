@@ -11,7 +11,7 @@ public class GetDependencyCmdlet : PSCmdlet {
         ValueFromPipelineByPropertyName = true,
         HelpMessage = "Path to the assembly file to analyze")]
     [ValidateNotNullOrEmpty]
-    [Alias("AssemblyPath", "PSPath")]
+    [Alias("AssemblyPath", "PSPath", "FilePath")]
     public string? Path { get; set; }
 
     [Parameter(
@@ -68,6 +68,11 @@ public class GetDependencyCmdlet : PSCmdlet {
 
                 WriteObject(dependencyInfo);
             }
+        }
+        catch (PipelineStoppedException) {
+            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
+            // This is normal behavior, just rethrow to let PowerShell handle it
+            throw;
         }
         catch (Exception ex) {
             WriteError(new ErrorRecord(

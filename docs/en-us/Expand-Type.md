@@ -14,8 +14,7 @@ Resolves methods, cmdlets, and types from pipeline input and streams decompiled 
 ## SYNTAX
 
 ```powershell
-Expand-Type [[-InputObject] <PSObject>] [-Path <String>] [-TypeName <String>] [-MethodName <String>]
-    [-IncludeDebugInfo] [-EmitMetadata] [-MetadataOnly] [<CommonParameters>]
+Expand-Type [[-InputObject] <PSObject>] [-Path <String>] [-TypeName <String>] [-MethodName <String>] [-Metadata] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -53,7 +52,7 @@ Decompiles the specified type from the provided assembly.
 ### Example 4: Emit metadata only
 
 ```powershell
-[math]::Round | Expand-Type -EmitMetadata -MetadataOnly
+[math]::Round | Expand-Type -Metadata
 ```
 
 Emits a metadata object describing the resolved assembly path, declaring type, method names and metadata tokens, and does not print the source when `-Metadata` is specified.
@@ -117,7 +116,7 @@ System.Object (various) — accepts method, type, command, and PS adapter object
 
 ## OUTPUTS
 
-- Default: `System.String` — When called without `-EmitMetadata` the cmdlet emits the decompiled C# source as plain text so it can be piped to formatters or renderers.
+- Default: `System.String` — When called without `-Metadata` the cmdlet emits the decompiled C# source as plain text so it can be piped to formatters or renderers.
 - Metadata: `ISpy.Models.ISpyDecompilationResult` — When `-Metadata` is used the cmdlet emits an `ISpyDecompilationResult` object containing `AssemblyPath`, `TypeName`, `MethodNames`, `MetadataTokens`, `Source` (if present), and other metadata.
 
 ## NOTES

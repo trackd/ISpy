@@ -73,7 +73,6 @@ Returns an `ISpyAssemblyInfo` object containing assembly metadata.
 ## NOTES
 
 - The cmdlet returns rich metadata including name, version, culture, public key token, target framework, and more.
-- Use with Select-Object to filter properties for concise output.
 
 ## RELATED LINKS
 
