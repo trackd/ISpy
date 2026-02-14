@@ -46,15 +46,17 @@ Import-Module .\output\ISpy.psd1
 
 This module exposes the following cmdlets for assembly analysis and decompilation:
 
-| Cmdlet | Purpose | Documentation |
-|--------|---------|---------------|
-| **Get-DecompiledSource** | Decompile types (returns an object per type) | [📖 Details](docs/en-us/Get-DecompiledSource.md) |
-| **Export-DecompiledSource** | Export decompiled types to files with namespace organization | [📖 Details](docs/en-us/Export-DecompiledSource.md) |
-| **Get-AssemblyInfo** | Assembly metadata and information | [📖 Details](docs/en-us/Get-AssemblyInfo.md) |
-| **Get-Type** | List and filter types within assemblies | [📖 Details](docs/en-us/Get-Type.md) |
-| **Expand-Type** | Decompile specific methods or show type source (interactive) | [📖 Details](docs/en-us/Expand-Type.md) |
-| **Get-Dependency** | Assembly dependency mapping | [📖 Details](docs/en-us/Get-Dependency.md) |
-| **Get-Decompiler** | Create configured `CSharpDecompiler` instances | [📖 Details](docs/en-us/Get-Decompiler.md) |
+|  Cmdlet  |  Purpose  |
+| -------- | --------- |
+| [Expand-Type](docs/en-us/Expand-Type.md) | Decompile specific methods or show type source (interactive) |
+| [Export-DecompiledSource](docs/en-us/Export-DecompiledSource.md) | Export decompiled types to files with namespace organization |
+| [Get-AssemblyInfo](docs/en-us/Get-AssemblyInfo.md) | Assembly metadata and information |
+| [Get-DecompiledSource](docs/en-us/Get-DecompiledSource.md) | Decompile types (returns an object per type) |
+| [Get-Dependency](docs/en-us/Get-Dependency.md) | Assembly dependency mapping |
+| [Get-Type](docs/en-us/Get-Type.md) | List and filter types within assemblies |
+| [New-Decompiler](docs/en-us/New-Decompiler.md) | Create configured `CSharpDecompiler` instances |
+| [New-DecompilerSetting](docs/en-us/New-DecompilerSetting.md) | Creates a configurable `DecompilerSettings` |
+| [New-DecompilerFormattingOption](docs/en-us/New-DecompilerFormattingOption.md) | Creates a configurable `CSharpFormattingOptions` |
 
 see  `docs/en-us/` for examples.
 
