@@ -14,4 +14,9 @@ public class ISpyTypeInfo {
     public bool IsValueType { get; set; }
     public bool IsCompilerGenerated { get; set; }
     public string? BaseType { get; set; }
+    public string? AssemblyPath { get; set; }
+    public string TypeName {
+        get => FullName;
+        set => FullName = value ?? string.Empty;
+    }
 }

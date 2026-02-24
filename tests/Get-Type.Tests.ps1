@@ -47,4 +47,14 @@ Describe "Get-Type cmdlet" {
         $help.Synopsis | Should -Not -BeNullOrEmpty
         $help.examples.example.Count | Should -BeGreaterThan 1
     }
+
+    It "Get-Type_PipesTo_ExpandType_MetadataBinding_Works" {
+        $result = Get-Type -Path $Script:TestAssembly -NamePattern '*HttpUtility*' |
+            Where-Object { $_.Name -match 'HttpUtility' } |
+            Expand-Type -Metadata
+
+        $result | Should -Not -BeNullOrEmpty
+        $result | ForEach-Object { $_ | Should -BeOfType ISpy.Models.ISpyDecompilationResult }
+        ($result | Select-Object -ExpandProperty TypeName) | Should -Contain 'System.Web.HttpUtility'
+    }
 }

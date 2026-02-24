@@ -52,7 +52,7 @@ public class GetTypeCmdlet : PSCmdlet {
             WildcardPattern? nameMatcher = BuildNameMatcher();
 
             foreach (ITypeDefinition? type in FilterTypes(decompiler.TypeSystem.MainModule.TypeDefinitions, Typekind, nameMatcher)) {
-                WriteObject(CreateTypeInfo(type));
+                WriteObject(CreateTypeInfo(type, resolvedPath));
             }
         }
         catch (PipelineStoppedException) {
@@ -95,7 +95,7 @@ public class GetTypeCmdlet : PSCmdlet {
         }
     }
 
-    private static ISpyTypeInfo CreateTypeInfo(ITypeDefinition type) {
+    private static ISpyTypeInfo CreateTypeInfo(ITypeDefinition type, string assemblyPath) {
         return new ISpyTypeInfo {
             FullName = type.FullName,
             Name = type.Name,
@@ -109,7 +109,9 @@ public class GetTypeCmdlet : PSCmdlet {
             IsClass = type.Kind == TypeKind.Class,
             IsValueType = type.IsReferenceType is false,
             IsCompilerGenerated = IsCompilerGenerated(type),
-            BaseType = type.DirectBaseTypes.FirstOrDefault()?.FullName
+            BaseType = type.DirectBaseTypes.FirstOrDefault()?.FullName,
+            AssemblyPath = assemblyPath,
+            TypeName = type.FullName
         };
     }
 
