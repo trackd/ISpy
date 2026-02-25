@@ -90,12 +90,16 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
 
             WriteVerbose($"Loading assembly: {resolvedPath}");
 
-            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
-                ThrowOnAssemblyResolveErrors = false,
-                UseDebugSymbols = false,
-                ShowDebugInfo = false,
-                UsingDeclarations = true,
-            });
+            CSharpDecompiler decompiler;
+            if (Decompiler is not null) {
+                decompiler = Decompiler;
+            }
+            else if (Settings is not null) {
+                decompiler = DecompilerFactory.Create(resolvedPath, Settings);
+            }
+            else {
+                decompiler = ILSpyDecompiler.CreateDecompiler(resolvedPath, useUsingDeclarations: true, showXmlDocumentation: Settings?.ShowXmlDocumentation ?? false);
+            }
 
             if (!string.IsNullOrEmpty(resolvedTypeName)) {
                 // Decompile a specific type

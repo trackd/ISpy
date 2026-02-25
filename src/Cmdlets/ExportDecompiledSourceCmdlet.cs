@@ -73,7 +73,16 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
             WriteVerbose($"Loading assembly: {resolvedAssembly}");
 
-            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedAssembly, Settings ?? new DecompilerSettings());
+            CSharpDecompiler decompiler;
+            if (Decompiler is not null) {
+                decompiler = Decompiler;
+            }
+            else if (Settings is not null) {
+                decompiler = DecompilerFactory.Create(resolvedAssembly, Settings);
+            }
+            else {
+                decompiler = ILSpyDecompiler.CreateDecompiler(resolvedAssembly, useUsingDeclarations: true, showXmlDocumentation: Settings?.ShowXmlDocumentation ?? false);
+            }
 
             int exportedFiles = 0;
             int skippedFiles = 0;

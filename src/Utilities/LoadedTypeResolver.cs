@@ -76,8 +76,42 @@ internal static class LoadedTypeResolver {
     public static bool TryResolveLoadedType(string typeName, out Type? resolvedType)
         => SearchHelpers.TryFirst(FindLoadedTypesByName(typeName), out resolvedType);
 
-    public static bool IsCompilerGenerated(Type type)
-        => type.Name.Length > 0 && type.Name[0] == '<';
+    public static bool IsCompilerGenerated(Type type) {
+        if (type is null)
+            return false;
+
+        // Prefer explicit attribute check where available
+        try {
+            if (type.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                return true;
+        }
+        catch {
+            // ignore reflection issues and fall back to name checks
+        }
+
+        string name = type.Name ?? string.Empty;
+        if (name.Length > 0 && name.Contains('<'))
+            return true;
+
+        string full = type.FullName ?? string.Empty;
+        return full.Length > 0 && full.Contains('<');
+    }
+
+    public static bool IsCompilerGenerated(MemberInfo? member) {
+        if (member is null)
+            return false;
+
+        try {
+            if (member.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                return true;
+        }
+        catch {
+            // ignore reflection issues and fall back to name checks
+        }
+
+        string name = member.Name ?? string.Empty;
+        return name.Length > 0 && name.Contains('<');
+    }
 
     public static TypeKind ToTypeKind(Type type) {
         if (type == typeof(void))
@@ -203,23 +237,30 @@ internal static class LoadedTypeResolver {
 
         foreach (Assembly assembly in assemblies.OrderBy(a => a.FullName, StringComparer.OrdinalIgnoreCase)) {
             foreach (Type type in GetAssemblyTypesCached(assembly)) {
+                string tName = type.Name ?? string.Empty;
+                string? tFull = type.FullName;
+                if (IsCompilerGenerated(type)) {
+                    continue;
+                }
+
                 allTypes.Add(type);
 
-                string fullName = type.FullName ?? type.Name;
+                string? fullName = type.FullName ?? type.Name;
 
-                if (!byFullNameBuilder.TryGetValue(fullName, out List<Type>? fullList)) {
+                if (!byFullNameBuilder.TryGetValue(fullName!, out List<Type>? fullList)) {
                     fullList = [];
-                    byFullNameBuilder[fullName] = fullList;
+                    byFullNameBuilder[fullName!] = fullList;
                 }
                 fullList.Add(type);
 
-                if (!byNameBuilder.TryGetValue(type.Name, out List<Type>? nameList)) {
+                string nameKey = type.Name ?? string.Empty;
+                if (!byNameBuilder.TryGetValue(nameKey, out List<Type>? nameList)) {
                     nameList = [];
-                    byNameBuilder[type.Name] = nameList;
+                    byNameBuilder[nameKey] = nameList;
                 }
                 nameList.Add(type);
 
-                typeNameSet.Add(fullName);
+                typeNameSet.Add(fullName!);
                 if (!string.IsNullOrWhiteSpace(type.Namespace))
                     namespaceSet.Add(type.Namespace);
             }
@@ -283,18 +324,21 @@ internal sealed record TypeIndexSnapshot(
         new Dictionary<string, IReadOnlyList<Type>>(StringComparer.OrdinalIgnoreCase),
         new Dictionary<string, IReadOnlyList<Type>>(StringComparer.OrdinalIgnoreCase),
         [],
-        []);
+        []
+    );
 }
 
 public sealed class LoadedTypeNameCompleter : IArgumentCompleter {
     public IEnumerable<CompletionResult> CompleteArgument(string commandName, string parameterName, string wordToComplete, System.Management.Automation.Language.CommandAst commandAst, IDictionary fakeBoundParameters) {
-        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : wordToComplete + "*";
+        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : "*" + wordToComplete + "*";
         var matcher = new WildcardPattern(wildcard, WildcardOptions.IgnoreCase);
 
         return LoadedTypeResolver
             .EnumerateLoadedTypeNames()
             .Where(n => matcher.IsMatch(n))
-            .Take(200)
+            // Exclude any compiler-generated type identifiers (angle-bracket tokens)
+            // .Where(n => !n.Contains('<') && !n.Contains('>'))
+            // .Take(200)
             .Select(n => new CompletionResult(n, n, CompletionResultType.Type, n));
     }
 }
@@ -308,29 +352,29 @@ public sealed class LoadedMethodNameCompleter : IArgumentCompleter {
         if (string.IsNullOrWhiteSpace(typeName) || !LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? type) || type is null)
             return [];
 
-        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : wordToComplete + "*";
+        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : "*" + wordToComplete + "*";
         var matcher = new WildcardPattern(wildcard, WildcardOptions.IgnoreCase);
 
         return type
             .GetMethodsCached()
+            .Where(m => !LoadedTypeResolver.IsCompilerGenerated(m))
             .Select(m => m.Name)
             .Where(n => matcher.IsMatch(n))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
-            .Take(200)
             .Select(n => new CompletionResult(n, n, CompletionResultType.Method, n));
     }
 }
 
 public sealed class LoadedNamespaceCompleter : IArgumentCompleter {
     public IEnumerable<CompletionResult> CompleteArgument(string commandName, string parameterName, string wordToComplete, System.Management.Automation.Language.CommandAst commandAst, IDictionary fakeBoundParameters) {
-        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : wordToComplete + "*";
+        string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : "*" + wordToComplete + "*";
         var matcher = new WildcardPattern(wildcard, WildcardOptions.IgnoreCase);
 
         return LoadedTypeResolver
             .EnumerateLoadedNamespaces()
             .Where(n => matcher.IsMatch(n))
-            .Take(200)
+            // .Take(200)
             .Select(n => new CompletionResult(n, n, CompletionResultType.Namespace, n));
     }
 }

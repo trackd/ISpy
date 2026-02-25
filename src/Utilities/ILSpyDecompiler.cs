@@ -64,7 +64,7 @@ internal static class ILSpyDecompiler {
             : activeDecompiler.DecompileAsString(handle);
     }
 
-    private static CSharpDecompiler CreateDecompiler(string assemblyPath, bool useUsingDeclarations, bool showXmlDocumentation = false) {
+    internal static CSharpDecompiler CreateDecompiler(string assemblyPath, bool useUsingDeclarations, bool showXmlDocumentation = false) {
         var settings = new DecompilerSettings {
             ThrowOnAssemblyResolveErrors = false,
             UseDebugSymbols = false,
@@ -73,6 +73,70 @@ internal static class ILSpyDecompiler {
             ShowXmlDocumentation = showXmlDocumentation,
             FileScopedNamespaces = true
         };
+
+        // formatting options for Stroustrup-ish style:
+
+        CSharpFormattingOptions fmt = settings.CSharpFormattingOptions;
+        fmt.ClassBraceStyle = BraceStyle.EndOfLine;
+        fmt.MethodBraceStyle = BraceStyle.EndOfLine;
+        fmt.ConstructorBraceStyle = BraceStyle.EndOfLine;
+        fmt.InterfaceBraceStyle = BraceStyle.EndOfLine;
+        fmt.StructBraceStyle = BraceStyle.EndOfLine;
+        fmt.EnumBraceStyle = BraceStyle.EndOfLine;
+        fmt.StatementBraceStyle = BraceStyle.EndOfLine;
+        fmt.ConstructorBraceStyle = BraceStyle.EndOfLine;
+        fmt.PropertyBraceStyle = BraceStyle.EndOfLine;
+        fmt.PropertyGetBraceStyle = BraceStyle.EndOfLine;
+        fmt.PropertySetBraceStyle = BraceStyle.EndOfLine;
+        fmt.EventBraceStyle = BraceStyle.EndOfLine;
+        fmt.EventAddBraceStyle = BraceStyle.EndOfLine;
+        fmt.EventRemoveBraceStyle = BraceStyle.EndOfLine;
+        fmt.AnonymousMethodBraceStyle = BraceStyle.EndOfLine;
+        fmt.ArrayInitializerBraceStyle = BraceStyle.EndOfLine;
+        fmt.NamespaceBraceStyle = BraceStyle.EndOfLine;
+        fmt.IndentationString = "    ";
+        fmt.ChainedMethodCallWrapping = Wrapping.WrapIfTooLong;
+
+        // Ensure method declaration parentheses and braces stay on same line
+        fmt.MethodDeclarationClosingParenthesesOnNewLine = NewLinePlacement.SameLine;
+        fmt.MethodCallClosingParenthesesOnNewLine = NewLinePlacement.SameLine;
+        fmt.NewLineAferMethodDeclarationOpenParentheses = NewLinePlacement.SameLine;
+        fmt.NewLineAferMethodCallOpenParentheses = NewLinePlacement.SameLine;
+        fmt.MethodDeclarationParameterWrapping = Wrapping.WrapIfTooLong;
+        fmt.MethodCallArgumentWrapping = Wrapping.WrapIfTooLong;
+        fmt.CatchNewLinePlacement = NewLinePlacement.SameLine;
+
+        // Indentation and block layout
+        fmt.IndentBlocks = true;
+        fmt.IndentBlocksInsideExpressions = true;
+        fmt.IndentMethodBody = true;
+        fmt.IndentClassBody = true;
+        fmt.IndentStructBody = true;
+        fmt.IndentEnumBody = true;
+        fmt.IndentInterfaceBody = true;
+        fmt.IndentNamespaceBody = true;
+        fmt.IndentPropertyBody = true;
+        fmt.IndentSwitchBody = true;
+        fmt.IndentCaseBody = true;
+
+        // Spacing preferences (make operators and commas readable)
+        fmt.SpaceAfterMethodCallParameterComma = true;
+        fmt.SpaceAfterMethodDeclarationParameterComma = true;
+        fmt.SpaceAroundAssignment = true;
+        fmt.SpaceAroundLogicalOperator = true;
+        fmt.SpaceAroundEqualityOperator = true;
+        fmt.SpaceAroundMultiplicativeOperator = true;
+        fmt.SpaceAroundAdditiveOperator = true;
+
+        // Blank lines to separate members/types for readability
+        fmt.MinimumBlankLinesBetweenMembers = 1;
+        fmt.MinimumBlankLinesBetweenTypes = 1;
+
+        // Misc
+        fmt.KeepCommentsAtFirstColumn = false;
+        fmt.RemoveEndOfLineWhiteSpace = true;
+        fmt.AlignElseInIfStatements = true;
+
 
         return DecompilerFactory.Create(assemblyPath, settings);
     }

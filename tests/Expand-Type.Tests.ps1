@@ -16,6 +16,14 @@ BeforeAll {
 }
 
 Describe 'Expand-Type cmdlet' {
+    It "Completion_ExcludesCompilerGeneratedTypeNames" {
+        # simulate tab-completion attempting to complete a name beginning with '<'
+        $comps = [ISpy.Utilities.LoadedTypeNameCompleter]::new().CompleteArgument(
+            'Expand-Type', 'TypeName', '<', $null, @{})
+        # there should be no results for compiler-generated identifiers
+        $comps | Should -BeNullOrEmpty
+    }
+
     It "Expand-Type_DefaultInput_ReturnsCSharpSource" {
         $output = [math]::Truncate | Expand-Type
         $output | Should -Not -BeNullOrEmpty

@@ -12,7 +12,8 @@ public class NewDecompilerSettingCmdlet : PSCmdlet, IDynamicParameters {
     [Parameter(
         HelpMessage = "Use New-DecompilerFormattingOption to create a formatting options object with specific settings."
     )]
-    public CSharpFormattingOptions? CSharpFormattingOptions { get; set; }
+    [Alias("CSharpFormattingOptions")]
+    public CSharpFormattingOptions? DecompilerFormattingOption { get; set; }
     public object GetDynamicParameters() {
         dynamicParameters ??= DecompilerSettingsDynamicParameters.CreateSwitchParameters();
         return dynamicParameters;
@@ -22,8 +23,8 @@ public class NewDecompilerSettingCmdlet : PSCmdlet, IDynamicParameters {
 
         var settings = new DecompilerSettings(LanguageVersion);
 
-        if (CSharpFormattingOptions is not null)
-            settings.CSharpFormattingOptions = CSharpFormattingOptions;
+        if (DecompilerFormattingOption is not null)
+            settings.CSharpFormattingOptions = DecompilerFormattingOption;
 
         DecompilerSettingsDynamicParameters.ApplyBoundSwitches(MyInvocation.BoundParameters, settings);
         WriteObject(settings);

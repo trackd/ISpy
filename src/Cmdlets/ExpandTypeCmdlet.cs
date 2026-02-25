@@ -575,19 +575,19 @@ public class ExpandTypeCmdlet : PSCmdlet {
             return cachedDecompiler;
 
         try {
-            DecompilerSettings settings = Settings ?? new DecompilerSettings {
-                ThrowOnAssemblyResolveErrors = false,
-                UseDebugSymbols = false,
-                ShowDebugInfo = false,
-                UsingDeclarations = true,
-                ShowXmlDocumentation = IncludeXml.IsPresent,
-                FileScopedNamespaces = true
-            };
+            CSharpDecompiler created;
+            if (Settings is not null) {
+                DecompilerSettings settings = Settings;
+                // ensure ShowXmlDocumentation is honored when requested
+                if (IncludeXml.IsPresent)
+                    settings.ShowXmlDocumentation = true;
 
-            if (Settings is not null && IncludeXml.IsPresent)
-                settings.ShowXmlDocumentation = true;
-
-            CSharpDecompiler created = DecompilerFactory.Create(normalizedPath, settings);
+                created = DecompilerFactory.Create(normalizedPath, settings);
+            }
+            else {
+                // Use the shared CreateDecompiler so default settings/formatting are consistent
+                created = ILSpyDecompiler.CreateDecompiler(normalizedPath, useUsingDeclarations: true, showXmlDocumentation: IncludeXml.IsPresent);
+            }
             _decompilerCache[normalizedPath] = created;
             return created;
         }

@@ -283,17 +283,6 @@ Position: Named
 Accept pipeline input: False
 ```
 
-### -CSharpFormattingOptions
-
-Use New-DecompilerFormattingOption to create a formatting options object with specific settings.
-
-```yaml
-Type: CSharpFormattingOptions
-Required: False
-Position: Named
-Accept pipeline input: False
-```
-
 ### -DecimalConstants
 
 Set DecompilerSettings.DecimalConstants to $true.
@@ -311,6 +300,18 @@ Set DecompilerSettings.DecompileMemberBodies to $true.
 
 ```yaml
 Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -DecompilerFormattingOption
+
+Use New-DecompilerFormattingOption to create a formatting options object with specific settings.
+
+```yaml
+Type: CSharpFormattingOptions
+Aliases: CSharpFormattingOptions
 Required: False
 Position: Named
 Accept pipeline input: False

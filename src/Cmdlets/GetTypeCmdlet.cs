@@ -137,12 +137,16 @@ public class GetTypeCmdlet : PSCmdlet {
     private void EnumerateTypesFromAssembly(string resolvedPath, TypeSearchCriteria criteria) {
         WriteVerbose($"Enumerating types from: {resolvedPath}");
 
-        CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
-            ThrowOnAssemblyResolveErrors = false,
-            UseDebugSymbols = false,
-            ShowDebugInfo = false,
-            UsingDeclarations = true,
-        });
+        CSharpDecompiler decompiler;
+        if (Decompiler is not null) {
+            decompiler = Decompiler;
+        }
+        else if (Settings is not null) {
+            decompiler = DecompilerFactory.Create(resolvedPath, Settings);
+        }
+        else {
+            decompiler = ILSpyDecompiler.CreateDecompiler(resolvedPath, useUsingDeclarations: true, showXmlDocumentation: Settings?.ShowXmlDocumentation ?? false);
+        }
 
         foreach (ITypeDefinition type in FilterTypes(decompiler.TypeSystem.MainModule.TypeDefinitions, criteria)) {
             WriteObject(CreateTypeInfo(type, resolvedPath));
