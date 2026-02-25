@@ -15,6 +15,49 @@ ISpy module provides comprehensive cmdlets to decompile .NET assemblies into rea
 - **Advanced Search Capabilities**: Find types and methods across multiple assemblies
 - **Pipeline Integration**: Full PowerShell pipeline support for batch operations
 - **Dependency Analysis**: Analyze assembly dependencies and relationships
+- **Syntax highlighting**: PowerShell Module [TextMate](https://github.com/trackd/TextMate), pipe `Expand-Type` output to `Format-TextMate`
+
+## Installation
+
+```powershell
+Install-Module ISpy
+```
+
+### Prerequisites
+
+- **PowerShell**: 7.4
+
+### Building from Source
+
+1. Clone this repository
+2. Open a terminal in the project directory
+3. Build the project:
+
+```powershell
+& .\build.ps1
+```
+
+1. Import the module:
+
+```powershell
+Import-Module .\output\ISpy.psd1
+```
+
+## Cmdlets
+
+This module exposes the following cmdlets for assembly analysis and decompilation:
+
+| Cmdlet | Purpose |
+| -------- | --------- |
+| [Expand-Type](docs/en-us/Expand-Type.md) | Decompile specific methods or show type source (interactive) |
+| [Export-DecompiledSource](docs/en-us/Export-DecompiledSource.md) | Export decompiled types to files with namespace organization |
+| [Get-AssemblyInfo](docs/en-us/Get-AssemblyInfo.md) | Assembly metadata and information |
+| [Get-DecompiledSource](docs/en-us/Get-DecompiledSource.md) | Decompile types (returns an object per type) |
+| [Get-Dependency](docs/en-us/Get-Dependency.md) | Assembly dependency mapping |
+| [Get-Type](docs/en-us/Get-Type.md) | List and filter types within assemblies |
+| [New-Decompiler](docs/en-us/New-Decompiler.md) | Create configured `CSharpDecompiler` instances |
+| [New-DecompilerSetting](docs/en-us/New-DecompilerSetting.md) | Creates a configurable `DecompilerSettings` |
+| [New-DecompilerFormattingOption](docs/en-us/New-DecompilerFormattingOption.md) | Creates a configurable `CSharpFormattingOptions` |
 
 ## Examples
 
@@ -22,12 +65,6 @@ ISpy module provides comprehensive cmdlets to decompile .NET assemblies into rea
 
 ```powershell
 Join-Path $PSHOME 'System.Console.dll'
-```
-
-### Analyze a few DLLs in `$PSHOME`
-
-```powershell
-Get-ChildItem -Path $PSHOME -Filter *.dll | Select-Object -First 5 | ForEach-Object { [pscustomobject]@{ Dll = $_.Name; Types = (Get-Type -Path $_.FullName -ErrorAction SilentlyContinue | Measure-Object).Count } } | Format-Table -AutoSize
 ```
 
 ### Quick Start: list a few types
@@ -66,7 +103,7 @@ Get-DecompiledSource -Path (Join-Path $PSHOME 'System.Console.dll') | Select-Obj
 Expand-Type -Path (Join-Path $PSHOME 'System.Console.dll') -TypeName 'System.Console' -MethodName 'WriteLine' | Select-Object -First 3
 ```
 
-### Try custom formatting
+### Custom decompilersettings / formatting
 
 ```powershell
 # custom decompiler + settings + formatting
@@ -113,49 +150,7 @@ $Settings = New-DecompilerSetting @options
 Expand-Type -Settings $Settings -TypeName 'System.Console' -MethodName 'Write'
 ```
 
-## Installation
-
-```powershell
-Install-Module ISpy
-```
-
-### Prerequisites
-
-- **PowerShell**: 7.4
-
-### Building from Source
-
-1. Clone this repository
-2. Open a terminal in the project directory
-3. Build the project:
-
-```powershell
-& .\build.ps1
-```
-
-1. Import the module:
-
-```powershell
-Import-Module .\output\ISpy.psd1
-```
-
-## Cmdlets
-
-This module exposes the following cmdlets for assembly analysis and decompilation:
-
-| Cmdlet | Purpose |
-| -------- | --------- |
-| [Expand-Type](docs/en-us/Expand-Type.md) | Decompile specific methods or show type source (interactive) |
-| [Export-DecompiledSource](docs/en-us/Export-DecompiledSource.md) | Export decompiled types to files with namespace organization |
-| [Get-AssemblyInfo](docs/en-us/Get-AssemblyInfo.md) | Assembly metadata and information |
-| [Get-DecompiledSource](docs/en-us/Get-DecompiledSource.md) | Decompile types (returns an object per type) |
-| [Get-Dependency](docs/en-us/Get-Dependency.md) | Assembly dependency mapping |
-| [Get-Type](docs/en-us/Get-Type.md) | List and filter types within assemblies |
-| [New-Decompiler](docs/en-us/New-Decompiler.md) | Create configured `CSharpDecompiler` instances |
-| [New-DecompilerSetting](docs/en-us/New-DecompilerSetting.md) | Creates a configurable `DecompilerSettings` |
-| [New-DecompilerFormattingOption](docs/en-us/New-DecompilerFormattingOption.md) | Creates a configurable `CSharpFormattingOptions` |
-
-see  `docs/en-us/` for examples.
+see  `docs/en-us/` for more examples.
 
 ## Development
 
