@@ -26,3 +26,4 @@ global using ICSharpCode.Decompiler.TypeSystem;
 global using ICSharpCode.Decompiler.Util;
 global using ISpy.Models;
 global using ISpy.Utilities;
+global using System.Collections.ObjectModel;

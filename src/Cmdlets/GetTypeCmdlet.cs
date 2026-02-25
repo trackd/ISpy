@@ -1,20 +1,39 @@
 ﻿namespace ISpy.Cmdlets;
 
-[Cmdlet(VerbsCommon.Get, "Type")]
+[Cmdlet(VerbsCommon.Get, "Type", DefaultParameterSetName = "ByPath")]
 [OutputType(typeof(ISpyTypeInfo))]
 public class GetTypeCmdlet : PSCmdlet {
     [Parameter(
         Mandatory = true,
         Position = 0,
-        ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
-        HelpMessage = "Path to the assembly file to analyze"
+        HelpMessage = "Path to the assembly file to analyze",
+        ParameterSetName = "ByPath"
     )]
     [Alias("AssemblyPath", "PSPath", "FilePath")]
     [ValidateNotNullOrEmpty]
     public string? Path { get; set; }
 
+    [Parameter(
+        Mandatory = false,
+        Position = 0,
+        ValueFromPipeline = true,
+        HelpMessage = "Pipeline input that can be an assembly path string or runtime type",
+        ParameterSetName = "ByInputObject"
+    )]
+    public object? InputObject { get; set; }
+
+    [Parameter(
+        Mandatory = true,
+        Position = 0,
+        HelpMessage = "Type name to resolve from currently loaded AppDomain assemblies",
+        ParameterSetName = "ByTypeName"
+    )]
+    [ArgumentCompleter(typeof(LoadedTypeNameCompleter))]
+    public string? TypeName { get; set; }
+
     [Parameter(HelpMessage = "Filter types by namespace")]
+    [ArgumentCompleter(typeof(LoadedNamespaceCompleter))]
     public string? Namespace { get; set; }
 
     [Parameter(HelpMessage = "Filter types by name pattern (supports PowerShell wildcards)")]
@@ -36,28 +55,73 @@ public class GetTypeCmdlet : PSCmdlet {
     public CSharpDecompiler? Decompiler { get; set; }
 
     protected override void ProcessRecord() {
-        string? resolvedPath = ResolveAssemblyPath(Path);
-        if (resolvedPath is null)
-            return;
-
         try {
-            WriteVerbose($"Enumerating types from: {resolvedPath}");
-
-            CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
-                ThrowOnAssemblyResolveErrors = false,
-                UseDebugSymbols = false,
-                ShowDebugInfo = false,
-                UsingDeclarations = true,
-            });
             WildcardPattern? nameMatcher = BuildNameMatcher();
+            var criteria = new TypeSearchCriteria(
+                Namespace,
+                nameMatcher,
+                PublicOnly.IsPresent,
+                IncludeCompilerGenerated.IsPresent,
+                Typekind);
 
-            foreach (ITypeDefinition? type in FilterTypes(decompiler.TypeSystem.MainModule.TypeDefinitions, Typekind, nameMatcher)) {
-                WriteObject(CreateTypeInfo(type, resolvedPath));
+            switch (ParameterSetName) {
+                case "ByInputObject":
+                    if (InputObject is null)
+                        return;
+
+                    object pipelineValue = InputObject is PSObject psObject && psObject.BaseObject is not null
+                        ? psObject.BaseObject
+                        : InputObject;
+
+                    if (pipelineValue is Type runtimeType) {
+                        if (criteria.Matches(runtimeType))
+                            WriteObject(LoadedTypeResolver.CreateTypeInfo(runtimeType));
+                        return;
+                    }
+
+                    if (pipelineValue is string pipedPath) {
+                        string? resolvedInputPath = ResolveAssemblyPath(pipedPath);
+                        if (resolvedInputPath is null)
+                            return;
+
+                        EnumerateTypesFromAssembly(resolvedInputPath, criteria);
+                    }
+
+                    return;
+
+                case "ByTypeName": {
+                        bool any = false;
+                        foreach (Type type in LoadedTypeResolver.FindLoadedTypesByName(TypeName ?? string.Empty)) {
+                            if (!criteria.Matches(type))
+                                continue;
+
+                            WriteObject(LoadedTypeResolver.CreateTypeInfo(type));
+                            any = true;
+                        }
+
+                        if (!any) {
+                            WriteError(new ErrorRecord(
+                                new ArgumentException($"Loaded type not found: {TypeName}"),
+                                "LoadedTypeNotFound",
+                                ErrorCategory.ObjectNotFound,
+                                TypeName));
+                        }
+
+                        return;
+                    }
+
+                case "ByPath":
+                default:
+                    break;
             }
+
+            string? resolvedPath = ResolveAssemblyPath(Path);
+            if (resolvedPath is null)
+                return;
+
+            EnumerateTypesFromAssembly(resolvedPath, criteria);
         }
         catch (PipelineStoppedException) {
-            // Pipeline was stopped by downstream cmdlet (e.g., Select-Object -First)
-            // This is normal behavior, just rethrow to let PowerShell handle it
             throw;
         }
         catch (Exception ex) {
@@ -65,8 +129,23 @@ public class GetTypeCmdlet : PSCmdlet {
                 ex,
                 "TypeEnumerationFailed",
                 ErrorCategory.InvalidOperation,
-                resolvedPath)
+                Path ?? (object?)TypeName ?? InputObject)
             );
+        }
+    }
+
+    private void EnumerateTypesFromAssembly(string resolvedPath, TypeSearchCriteria criteria) {
+        WriteVerbose($"Enumerating types from: {resolvedPath}");
+
+        CSharpDecompiler decompiler = Decompiler ?? DecompilerFactory.Create(resolvedPath, Settings ?? new DecompilerSettings {
+            ThrowOnAssemblyResolveErrors = false,
+            UseDebugSymbols = false,
+            ShowDebugInfo = false,
+            UsingDeclarations = true,
+        });
+
+        foreach (ITypeDefinition type in FilterTypes(decompiler.TypeSystem.MainModule.TypeDefinitions, criteria)) {
+            WriteObject(CreateTypeInfo(type, resolvedPath));
         }
     }
     private WildcardPattern? BuildNameMatcher()
@@ -74,21 +153,9 @@ public class GetTypeCmdlet : PSCmdlet {
             ? null
             : new WildcardPattern(NamePattern, WildcardOptions.IgnoreCase);
 
-    private IEnumerable<ITypeDefinition> FilterTypes(IEnumerable<ITypeDefinition> candidates, TypeKind[]? kinds, WildcardPattern? matcher) {
+    private static IEnumerable<ITypeDefinition> FilterTypes(IEnumerable<ITypeDefinition> candidates, TypeSearchCriteria criteria) {
         foreach (ITypeDefinition type in candidates) {
-            if (!IncludeCompilerGenerated.IsPresent && IsCompilerGenerated(type))
-                continue;
-
-            if (PublicOnly.IsPresent && type.Accessibility != Accessibility.Public)
-                continue;
-
-            if (!string.IsNullOrEmpty(Namespace) && !string.Equals(Namespace, type.Namespace, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (matcher?.IsMatch(type.Name) == false && !matcher.IsMatch(type.FullName))
-                continue;
-
-            if (kinds?.Contains(type.Kind) == false)
+            if (!criteria.Matches(type))
                 continue;
 
             yield return type;
@@ -96,6 +163,8 @@ public class GetTypeCmdlet : PSCmdlet {
     }
 
     private static ISpyTypeInfo CreateTypeInfo(ITypeDefinition type, string assemblyPath) {
+        SearchHelpers.TryFirst(type.DirectBaseTypes, out IType? baseType);
+
         return new ISpyTypeInfo {
             FullName = type.FullName,
             Name = type.Name,
@@ -109,7 +178,7 @@ public class GetTypeCmdlet : PSCmdlet {
             IsClass = type.Kind == TypeKind.Class,
             IsValueType = type.IsReferenceType is false,
             IsCompilerGenerated = IsCompilerGenerated(type),
-            BaseType = type.DirectBaseTypes.FirstOrDefault()?.FullName,
+            BaseType = baseType?.FullName,
             AssemblyPath = assemblyPath,
             TypeName = type.FullName
         };

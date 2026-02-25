@@ -14,7 +14,7 @@ Resolves methods, cmdlets, and types from pipeline input and streams decompiled 
 ## SYNTAX
 
 ```powershell
-Expand-Type [[-InputObject] <PSObject>] [-Path <String>] [-TypeName <String>] [-MethodName <String>] [-Metadata] [<CommonParameters>]
+Expand-Type [[-InputObject] <PSObject>] [-Path <String>] [-TypeName <String>] [-MethodName <String>] [-Metadata] [-IncludeXml] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -28,10 +28,10 @@ This cmdlet is useful for interactively inspecting implementations discovered vi
 ### Example 1: Decompile a method group
 
 ```powershell
-[math]::Round | Expand-Type
+[math]::Truncate | Expand-Type
 ```
 
-Resolves the `Round` overloads on `System.Math` and prints the decompiled C# bodies for the overloads.
+Resolves the `Truncate` overloads on `System.Math` and prints the decompiled C# bodies for the overloads.
 
 ### Example 2: Decompile a cmdlet implementation
 
@@ -49,13 +49,29 @@ Expand-Type -Path "C:\libs\MyLib.dll" -TypeName "MyNamespace.MyClass"
 
 Decompiles the specified type from the provided assembly.
 
-### Example 4: Emit metadata only
+### Example 3b: Decompile a loaded type without an assembly path
+
+```powershell
+Expand-Type -TypeName "System.Management.Automation.LanguagePrimitives"
+```
+
+Resolves the type from loaded assemblies in the current PowerShell process and decompiles it.
+
+### Example 4: Emit metadata
 
 ```powershell
 [math]::Round | Expand-Type -Metadata
 ```
 
 Emits a metadata object describing the resolved assembly path, declaring type, method names and metadata tokens, and does not print the source when `-Metadata` is specified.
+
+### Example 5: Include XML documentation comments
+
+```powershell
+[System.Management.Automation.Host.PSHostUserInterface]::GetFormatStyleString | Expand-Type -IncludeXml
+```
+
+Includes XML documentation comments in the emitted decompiled source. By default, XML comments are not included.
 
 ## PARAMETERS
 
@@ -108,6 +124,37 @@ When present, emits a metadata object (assembly path, declaring type, method nam
 ```yaml
 Type: SwitchParameter
 Required: False
+```
+
+### -IncludeXml
+
+When present, includes XML documentation comments in decompiled output. By default, XML comments are omitted.
+
+```yaml
+Type: SwitchParameter
+Required: False
+```
+
+### -Settings
+
+Custom `DecompilerSettings` used when creating decompiler instances for decompilation.
+
+When `-Settings` or `-Decompiler` is provided, `Expand-Type` emits the raw decompiler output and does not apply additional post-processing (for example, `using`-directive removal or header comment shaping).
+
+```yaml
+Type: DecompilerSettings
+Required: False
+Position: Named
+```
+
+### -Decompiler
+
+Custom `CSharpDecompiler` instance to use instead of creating one from path-based defaults.
+
+```yaml
+Type: CSharpDecompiler
+Required: False
+Position: Named
 ```
 
 ## INPUTS

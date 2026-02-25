@@ -79,7 +79,7 @@ internal static class TypeResolutionHelper {
             yield break;
         }
 
-        foreach (MethodBase methodCandidate in type.GetMethods(MethodFlags)) {
+        foreach (MethodInfo methodCandidate in ReflectionCache.GetMethods(type, MethodFlags)) {
             if (!IsNameMatch(methodCandidate, methodName))
                 continue;
 
@@ -159,7 +159,7 @@ internal static class TypeResolutionHelper {
     private static bool TryGetPropertyValue(object target, string propertyName, out object? value) {
         value = null;
         Type type = target.GetType();
-        PropertyInfo? property = type.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        PropertyInfo? property = ReflectionCache.GetProperty(type, propertyName);
         if (property is null)
             return false;
 

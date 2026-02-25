@@ -1,7 +1,7 @@
 @{
     # Module manifest for ISpy
     RootModule             = 'lib/ISpy.dll'
-    ModuleVersion          = '0.2.0'
+    ModuleVersion          = '0.3.0'
     GUID                   = '15ad5935-21a2-4eed-aeec-2232c7507dc2'
     Author                 = 'trackd'
     CompanyName            = 'trackd'

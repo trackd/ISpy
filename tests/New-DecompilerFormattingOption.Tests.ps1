@@ -18,6 +18,33 @@ Describe 'New-DecompilerFormattingOption cmdlet' {
         $options.IndentSwitchBody | Should -BeTrue
     }
 
+    It 'New-DecompilerFormattingOption_DynamicIntParameter_SetsValue' {
+        $formattingType = [ICSharpCode.Decompiler.CSharp.OutputVisitor.CSharpFormattingOptions]
+        $intProperty = $formattingType.GetProperties([System.Reflection.BindingFlags]'Public,Instance') |
+            Where-Object { $_.CanWrite -and $null -ne $_.SetMethod -and $_.PropertyType -eq [int] } |
+            Select-Object -First 1 -ExpandProperty Name
+
+        $intProperty | Should -Not -BeNullOrEmpty
+        $params = @{ $intProperty = 123 }
+        $formattingOptions = New-DecompilerFormattingOption @params
+
+        $formattingOptions.$intProperty | Should -Be 123
+    }
+
+    It 'New-DecompilerFormattingOption_DynamicEnumParameter_SetsValue' {
+        $formattingType = [ICSharpCode.Decompiler.CSharp.OutputVisitor.CSharpFormattingOptions]
+        $enumProperty = $formattingType.GetProperties([System.Reflection.BindingFlags]'Public,Instance') |
+            Where-Object { $_.CanWrite -and $null -ne $_.SetMethod -and $_.PropertyType.IsEnum } |
+            Select-Object -First 1
+
+        $enumProperty | Should -Not -BeNull
+        $enumValue = [System.Enum]::GetNames($enumProperty.PropertyType) | Select-Object -First 1
+        $params = @{ $($enumProperty.Name) = $enumValue }
+        $formattingOptions = New-DecompilerFormattingOption @params
+
+        $formattingOptions.$($enumProperty.Name).ToString() | Should -Be $enumValue
+    }
+
     It 'New-DecompilerFormattingOption_CanBeUsedForDecompilerSettings' {
         $options = New-DecompilerFormattingOption -IndentSwitchBody
         $settings = New-DecompilerSetting -CSharpFormattingOptions $options

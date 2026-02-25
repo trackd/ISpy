@@ -24,11 +24,13 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
     [Parameter(
         Mandatory = false,
         HelpMessage = "Specific types to export (if not specified, exports all types)")]
+    [ArgumentCompleter(typeof(LoadedTypeNameCompleter))]
     public string[]? TypeNames { get; set; }
 
     [Parameter(
         Mandatory = false,
         HelpMessage = "Namespace filter")]
+    [ArgumentCompleter(typeof(LoadedNamespaceCompleter))]
     public string? Namespace { get; set; }
 
     [Parameter(

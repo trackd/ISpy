@@ -6,7 +6,7 @@ namespace ISpy.Cmdlets;
 [Alias("gai")]
 public class GetAssemblyInfoCmdlet : PSCmdlet {
     [Parameter(
-        Mandatory = true,
+        Mandatory = false,
         Position = 0,
         ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
@@ -15,8 +15,18 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
     [Alias("AssemblyPath", "PSPath", "FilePath")]
     public string? Path { get; set; }
 
+    [Parameter(
+        Mandatory = false,
+        Position = 1,
+        HelpMessage = "Resolve assembly from a loaded type name when -Path is not provided")]
+    [ArgumentCompleter(typeof(LoadedTypeNameCompleter))]
+    public string? TypeName { get; set; }
+
     protected override void ProcessRecord() {
-        string resolvedPath = GetUnresolvedProviderPathFromPSPath(Path);
+        string? resolvedPath = ResolveAssemblyPathFromInput(Path, TypeName);
+        if (string.IsNullOrWhiteSpace(resolvedPath))
+            return;
+
         if (!File.Exists(resolvedPath)) {
             WriteError(new ErrorRecord(
                 new FileNotFoundException($"Assembly file not found: {resolvedPath}"),
@@ -125,8 +135,7 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
         }
 
         // Fallback: try to resolve dependencies from loaded assemblies if needed (for future extensibility)
-        // Example: if you ever need to resolve a type, use this pattern
-        // var loaded = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "SomeDependency");
+        // Example: if you ever need to resolve a type, use SearchHelpers.TryFirst over loaded assemblies.
 
         var assemblyInfo = new ISpyAssemblyInfo {
             FullName = assemblyFullName,
@@ -144,10 +153,47 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
         WriteObject(assemblyInfo);
     }
 
+    private string? ResolveAssemblyPathFromInput(string? path, string? typeName) {
+        if (!string.IsNullOrWhiteSpace(path))
+            return GetUnresolvedProviderPathFromPSPath(path);
+
+        if (string.IsNullOrWhiteSpace(typeName)) {
+            WriteError(new ErrorRecord(
+                new ArgumentException("Path or TypeName must be provided."),
+                "MissingPathOrTypeName",
+                ErrorCategory.InvalidArgument,
+                this));
+            return null;
+        }
+
+        if (!LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? loadedType) || loadedType is null) {
+            WriteError(new ErrorRecord(
+                new ArgumentException($"Loaded type not found: {typeName}"),
+                "LoadedTypeNotFound",
+                ErrorCategory.ObjectNotFound,
+                typeName));
+            return null;
+        }
+
+        try {
+            return loadedType.Assembly.Location;
+        }
+        catch {
+            WriteError(new ErrorRecord(
+                new FileNotFoundException($"Assembly location is unavailable for loaded type: {typeName}"),
+                "AssemblyNotFound",
+                ErrorCategory.ObjectNotFound,
+                typeName));
+            return null;
+        }
+    }
+
     private static string GetTargetFramework(MetadataModule module) {
         try {
-            IAttribute? targetFrameworkAttr = module.GetAssemblyAttributes()
-                .FirstOrDefault(attr => attr.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute");
+            SearchHelpers.TryFirst(
+                module.GetAssemblyAttributes(),
+                attr => attr.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute",
+                out IAttribute? targetFrameworkAttr);
 
             return targetFrameworkAttr?.FixedArguments.Length > 0
                 ? targetFrameworkAttr.FixedArguments[0].Value?.ToString() ?? "Unknown"

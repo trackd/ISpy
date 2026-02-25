@@ -57,4 +57,20 @@ Describe "Get-Type cmdlet" {
         $result | ForEach-Object { $_ | Should -BeOfType ISpy.Models.ISpyDecompilationResult }
         ($result | Select-Object -ExpandProperty TypeName) | Should -Contain 'System.Web.HttpUtility'
     }
+
+    It "Get-Type_RuntimeTypePipeline_ConvertsToTypeInfo" {
+        $result = [System.Management.Automation.LanguagePrimitives] | Get-Type
+
+        $result | Should -Not -BeNull
+        $result | Should -BeOfType ISpy.Models.ISpyTypeInfo
+        $result.FullName | Should -Be 'System.Management.Automation.LanguagePrimitives'
+    }
+
+    It "Get-Type_TypeName_ResolvesFromLoadedAssemblies" {
+        $result = Get-Type -TypeName 'System.Management.Automation.LanguagePrimitives'
+
+        $result | Should -Not -BeNull
+        $result | Should -BeOfType ISpy.Models.ISpyTypeInfo
+        $result.FullName | Should -Be 'System.Management.Automation.LanguagePrimitives'
+    }
 }

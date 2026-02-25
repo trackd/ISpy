@@ -7,6 +7,10 @@ BeforeAll {
 }
 
 Describe "Get-Dependency cmdlet" {
+    It "Get-Dependency_MissingPathAndTypeName_Throws" {
+        { Get-Dependency -ErrorAction Stop } | Should -Throw
+    }
+
     It "Get-Dependency_Default_ReturnsReferencedAssemblies" {
         $results = Get-Dependency -Path $Script:TestAssembly
 
@@ -21,6 +25,14 @@ Describe "Get-Dependency cmdlet" {
         $external.Count | Should -BeLessOrEqual $all.Count
         ($external | Where-Object { $_.Name -eq $Script:TestAssemblyName }) | Should -BeNullOrEmpty
     }
+
+    It "Get-Dependency_TypeNameOnly_ResolvesLoadedAssembly" {
+        $results = Get-Dependency -TypeName 'System.Web.HttpUtility'
+
+        $results | Should -Not -BeNullOrEmpty
+        $results | ForEach-Object { $_.FullName | Should -Match 'Version=' }
+    }
+
     It 'Should have Help and examples' {
         $help = Get-Help Get-Dependency -Full
         $help.Synopsis | Should -Not -BeNullOrEmpty

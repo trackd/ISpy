@@ -5,7 +5,7 @@ namespace ISpy.Cmdlets;
 [Alias("dep")]
 public class GetDependencyCmdlet : PSCmdlet {
     [Parameter(
-        Mandatory = true,
+        Mandatory = false,
         Position = 0,
         ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
@@ -15,13 +15,23 @@ public class GetDependencyCmdlet : PSCmdlet {
     public string? Path { get; set; }
 
     [Parameter(
+        Mandatory = false,
+        Position = 1,
+        HelpMessage = "Resolve assembly from a loaded type name when -Path is not provided")]
+    [ArgumentCompleter(typeof(LoadedTypeNameCompleter))]
+    public string? TypeName { get; set; }
+
+    [Parameter(
         HelpMessage = "Only show external dependencies (exclude self-references)"
     )]
     public SwitchParameter ExternalOnly { get; set; }
 
     protected override void ProcessRecord() {
         try {
-            string resolvedPath = GetUnresolvedProviderPathFromPSPath(Path);
+            string? resolvedPath = ResolveAssemblyPathFromInput(Path, TypeName);
+            if (string.IsNullOrWhiteSpace(resolvedPath))
+                return;
+
             WriteVerbose($"Loading assembly: {resolvedPath}");
 
             if (!File.Exists(resolvedPath)) {
@@ -80,6 +90,41 @@ public class GetDependencyCmdlet : PSCmdlet {
                 "DependencyAnalysisError",
                 ErrorCategory.InvalidOperation,
                 Path));
+        }
+    }
+
+    private string? ResolveAssemblyPathFromInput(string? path, string? typeName) {
+        if (!string.IsNullOrWhiteSpace(path))
+            return GetUnresolvedProviderPathFromPSPath(path);
+
+        if (string.IsNullOrWhiteSpace(typeName)) {
+            WriteError(new ErrorRecord(
+                new ArgumentException("Path or TypeName must be provided."),
+                "MissingPathOrTypeName",
+                ErrorCategory.InvalidArgument,
+                this));
+            return null;
+        }
+
+        if (!LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? loadedType) || loadedType is null) {
+            WriteError(new ErrorRecord(
+                new ArgumentException($"Loaded type not found: {typeName}"),
+                "LoadedTypeNotFound",
+                ErrorCategory.ObjectNotFound,
+                typeName));
+            return null;
+        }
+
+        try {
+            return loadedType.Assembly.Location;
+        }
+        catch {
+            WriteError(new ErrorRecord(
+                new FileNotFoundException($"Assembly location is unavailable for loaded type: {typeName}"),
+                "AssemblyNotFound",
+                ErrorCategory.ObjectNotFound,
+                typeName));
+            return null;
         }
     }
 }

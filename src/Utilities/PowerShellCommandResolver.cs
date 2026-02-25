@@ -23,7 +23,11 @@ internal static class PowerShellCommandResolver {
             input = psObject.BaseObject;
 
         command = input as CommandInfo;
-        return command is not null;
+        if (command is null)
+            return false;
+
+        command = ResolveAlias(command);
+        return true;
     }
 
     public static bool TryGetCommandInfo(PSCmdlet cmdlet, object? input, out CommandInfo? command) {
@@ -37,11 +41,19 @@ internal static class PowerShellCommandResolver {
 
         if (input is string commandName) {
             command = GetCommand(cmdlet, commandName);
-            return command is not null;
+            if (command is null)
+                return false;
+
+            command = ResolveAlias(command);
+            return true;
         }
 
         command = input as CommandInfo;
-        return command is not null;
+        if (command is null)
+            return false;
+
+        command = ResolveAlias(command);
+        return true;
     }
 
     // Resolve PowerShell-defined commands to script text for direct output.

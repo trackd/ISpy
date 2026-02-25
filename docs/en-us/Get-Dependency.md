@@ -14,7 +14,7 @@ Analyzes and lists assembly dependencies and references.
 ## SYNTAX
 
 ```powershell
-Get-Dependency [-Path] <String> [-ExternalOnly] [<CommonParameters>]
+Get-Dependency [[-Path] <String>] [[-TypeName] <String>] [-ExternalOnly] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -39,6 +39,14 @@ PS C:\> Get-Dependency -Path './lib/MyLibrary.dll' -ExternalOnly
 
 This command lists only external references (skips self-references) for `MyLibrary.dll`.  
 
+### Example 3: Resolve dependencies from a loaded type
+
+```powershell
+PS C:\> Get-Dependency -TypeName 'System.Web.HttpUtility'
+```
+
+This command resolves the loaded type to its defining assembly and returns referenced dependencies without requiring `-Path`.
+
 ## PARAMETERS
 
 ### -Path
@@ -47,9 +55,20 @@ Specifies the path to the .NET assembly file to analyze.
 
 ```yaml
 Type: String
-Required: True
+Required: False
 Position: 0
 Accept pipeline input: True (ByPropertyName, ByValue)
+```
+
+### -TypeName
+
+Resolves the assembly from a currently loaded type name when `-Path` is omitted.
+
+```yaml
+Type: String
+Required: False
+Position: 1
+Accept pipeline input: False
 ```
 
 ### -ExternalOnly

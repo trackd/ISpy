@@ -55,7 +55,7 @@ This command creates directories matching each type's namespace and overwrites a
 ### Example 4: Export with a custom decompiler instance
 
 ```powershell
-PS C:\> $decompiler = Get-Decompiler -Path "$PSHOME/Humanizer.dll"
+PS C:\> $decompiler = New-Decompiler -Path "$PSHOME/Humanizer.dll"
 PS C:\> Export-DecompiledSource -Path "$PSHOME/Humanizer.dll" -OutputPath ".\Decompiled" -TypeNames @('Humanizer.NumberToWordsExtension') -Decompiler $decompiler
 ```
 

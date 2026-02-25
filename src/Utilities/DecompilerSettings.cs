@@ -8,7 +8,7 @@ internal static class DecompilerSettingsDynamicParameters {
         var parameters = new RuntimeDefinedParameterDictionary();
 
         foreach (KeyValuePair<string, PropertyInfo> property in BoolSettingsProperties.Value) {
-            var attributes = new System.Collections.ObjectModel.Collection<Attribute> {
+            var attributes = new Collection<Attribute> {
                 new ParameterAttribute {
                     Mandatory = false,
                     HelpMessage = $"Set DecompilerSettings.{property.Key} to $true."

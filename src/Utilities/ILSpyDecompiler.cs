@@ -1,19 +1,19 @@
 ﻿namespace ISpy.Utilities;
 
 internal static class ILSpyDecompiler {
-    public static string DecompileMethod(MethodBase method) {
+    public static string DecompileMethod(MethodBase method, bool showXmlDocumentation = false, CSharpDecompiler? decompiler = null) {
         string? assemblyPath = method.Module?.FullyQualifiedName ?? method.DeclaringType?.Assembly.Location;
         return string.IsNullOrEmpty(assemblyPath)
             ? throw new InvalidOperationException("Unable to determine the assembly path for the selected method.")
-            : DecompileToken(assemblyPath, method.MetadataToken);
+            : DecompileToken(assemblyPath, method.MetadataToken, showXmlDocumentation: showXmlDocumentation, decompiler: decompiler);
     }
 
-    public static string DecompileType(string assemblyPath, FullTypeName fullTypeName) {
-        CSharpDecompiler decompiler = CreateDecompiler(assemblyPath, useUsingDeclarations: true);
-        return decompiler.DecompileTypeAsString(fullTypeName);
+    public static string DecompileType(string assemblyPath, FullTypeName fullTypeName, bool showXmlDocumentation = false, bool useUsingDeclarations = true, CSharpDecompiler? decompiler = null) {
+        CSharpDecompiler activeDecompiler = decompiler ?? CreateDecompiler(assemblyPath, useUsingDeclarations: useUsingDeclarations, showXmlDocumentation: showXmlDocumentation);
+        return activeDecompiler.DecompileTypeAsString(fullTypeName);
     }
 
-    public static string DecompileMethods(IEnumerable<MethodBase> methods) {
+    public static string DecompileMethods(IEnumerable<MethodBase> methods, bool showXmlDocumentation = false, bool useUsingDeclarations = true, CSharpDecompiler? decompiler = null) {
         ArgumentNullException.ThrowIfNull(methods);
 
         string? assemblyPath = null;
@@ -50,29 +50,28 @@ internal static class ILSpyDecompiler {
         if (assemblyPath is null || handles.Count == 0)
             throw new InvalidOperationException("No methods were provided to decompile.");
 
-        // When decompiling multiple methods from the same assembly, enable using declarations
-        // so the output contains friendly type names and a single consolidated set of usings.
-        CSharpDecompiler decompiler = CreateDecompiler(assemblyPath, useUsingDeclarations: true);
-        return decompiler.DecompileAsString(handles);
+        CSharpDecompiler activeDecompiler = decompiler ?? CreateDecompiler(assemblyPath, useUsingDeclarations: useUsingDeclarations, showXmlDocumentation: showXmlDocumentation);
+        return activeDecompiler.DecompileAsString(handles);
     }
 
-    private static string DecompileToken(string assemblyPath, int metadataToken) {
+    private static string DecompileToken(string assemblyPath, int metadataToken, bool showXmlDocumentation = false, CSharpDecompiler? decompiler = null) {
         if (metadataToken == 0)
             throw new InvalidOperationException("The selected method does not have a valid metadata token.");
-
-        CSharpDecompiler decompiler = CreateDecompiler(assemblyPath, useUsingDeclarations: true);
+        CSharpDecompiler activeDecompiler = decompiler ?? CreateDecompiler(assemblyPath, useUsingDeclarations: true, showXmlDocumentation: showXmlDocumentation);
         var handle = (EntityHandle)MetadataTokens.Handle(metadataToken);
         return handle.IsNil || handle.Kind != HandleKind.MethodDefinition
             ? throw new InvalidOperationException("The selected method does not map to a method definition token.")
-            : decompiler.DecompileAsString(handle);
+            : activeDecompiler.DecompileAsString(handle);
     }
 
-    private static CSharpDecompiler CreateDecompiler(string assemblyPath, bool useUsingDeclarations) {
+    private static CSharpDecompiler CreateDecompiler(string assemblyPath, bool useUsingDeclarations, bool showXmlDocumentation = false) {
         var settings = new DecompilerSettings {
             ThrowOnAssemblyResolveErrors = false,
             UseDebugSymbols = false,
             ShowDebugInfo = false,
             UsingDeclarations = useUsingDeclarations,
+            ShowXmlDocumentation = showXmlDocumentation,
+            FileScopedNamespaces = true
         };
 
         return DecompilerFactory.Create(assemblyPath, settings);

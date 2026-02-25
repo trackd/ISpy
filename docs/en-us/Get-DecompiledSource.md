@@ -16,6 +16,8 @@ Decompiles .NET assemblies or specific types to readable C# source code using th
 ```powershell
 Get-DecompiledSource [-Path] <String> [[-TypeName] <String>] [-OutputPath <String>]
  [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
+
+Get-DecompiledSource [-TypeName] <String> [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -51,11 +53,19 @@ This command decompiles every type in `Humanizer.dll`
 ### Example 4: Reuse a custom decompiler
 
 ```powershell
-PS C:\> $decompiler = Get-Decompiler -Path "MyLibrary.dll"
+PS C:\> $decompiler = New-Decompiler -Path "MyLibrary.dll"
 PS C:\> Get-DecompiledSource -Path "MyLibrary.dll" -TypeName 'MyCompany.Core.Service' -Decompiler $decompiler
 ```
 
 This command uses a pre-created decompiler instance.
+
+### Example 5: Decompile a loaded type without specifying a path
+
+```powershell
+PS C:\> Get-DecompiledSource -TypeName System.Management.Automation.LanguagePrimitives
+```
+
+This command resolves the type from loaded assemblies, discovers its assembly path automatically, and decompiles that type.
 
 ## PARAMETERS
 
@@ -80,6 +90,8 @@ Required: False
 Position: 1
 Accept pipeline input: False
 ```
+
+When `-Path` is omitted, `-TypeName` is resolved against loaded AppDomain assemblies to infer the assembly path.
 
 ### -Settings
 
@@ -121,4 +133,4 @@ Returns an `ISpyDecompilationResult` containing `AssemblyPath`, `TypeName`, `Sou
 ## RELATED LINKS
 
 [Export-DecompiledSource](Export-DecompiledSource.md)
-[Show-Type](Show-Type.md)
+[Expand-Type](Expand-Type.md)

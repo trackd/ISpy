@@ -6,7 +6,7 @@ public class NewDecompilerFormattingOptionCmdlet : PSCmdlet, IDynamicParameters 
 
     private RuntimeDefinedParameterDictionary? dynamicParameters;
     public object GetDynamicParameters() {
-        dynamicParameters ??= CSharpFormattingOptionsDynamicParameters.CreateSwitchParameters();
+        dynamicParameters ??= CSharpFormattingOptionsDynamicParameters.CreateRuntimeParameters();
         return dynamicParameters;
     }
 

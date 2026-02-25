@@ -14,7 +14,7 @@ Retrieves comprehensive metadata and information about a .NET assembly.
 ## SYNTAX
 
 ```powershell
-Get-AssemblyInfo [-Path] <String> [<CommonParameters>]
+Get-AssemblyInfo [[-Path] <String>] [[-TypeName] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -47,6 +47,14 @@ PS C:\> Get-AssemblyInfo -Path "./lib/MyLibrary.dll" | Select-Object FullName, T
 
 This command selects and displays only the `FullName`, `TargetFramework`, and `TypeCount` properties for concise output.
 
+### Example 4: Resolve assembly from a loaded type
+
+```powershell
+PS C:\> Get-AssemblyInfo -TypeName "System.Web.HttpUtility"
+```
+
+This command resolves the loaded type to its defining assembly and returns assembly metadata without specifying `-Path`.
+
 ## PARAMETERS
 
 ### -Path
@@ -55,9 +63,20 @@ Specifies the path to the .NET assembly file to analyze.
 
 ```yaml
 Type: String
-Required: True
+Required: False
 Position: 0
 Accept pipeline input: True (ByPropertyName, ByValue)
+```
+
+### -TypeName
+
+Resolves the assembly from a currently loaded type name when `-Path` is omitted.
+
+```yaml
+Type: String
+Required: False
+Position: 1
+Accept pipeline input: False
 ```
 
 ## INPUTS

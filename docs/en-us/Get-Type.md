@@ -14,7 +14,11 @@ Retrieves detailed type metadata from a .NET assembly with flexible filtering an
 ## SYNTAX
 
 ```powershell
-Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-TypeKinds <TypeKind[]>] [-IncludeCompilerGenerated] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
+Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-Typekind <TypeKind[]>] [-IncludeCompilerGenerated] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
+
+Get-Type [[-InputObject] <Object>] [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-Typekind <TypeKind[]>] [-IncludeCompilerGenerated] [-Settings <DecompilerSettings>] [-Decompiler <CSharpDecompiler>] [<CommonParameters>]
+
+Get-Type [-TypeName] <String> [-Namespace <String>] [-NamePattern <String>] [-PublicOnly] [-Typekind <TypeKind[]>] [-IncludeCompilerGenerated] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -22,6 +26,9 @@ Get-Type [-Path] <String> [-Namespace <String>] [-NamePattern <String>] [-Public
 `Get-Type` analyzes every type defined in the specified assembly and streams back `ISpyTypeInfo`
 objects. The cmdlet supports namespace, name-pattern, visibility, and type-kind filters while keeping
 compiler-generated definitions out of the default view.
+
+When `-TypeName` is provided, `Get-Type` resolves matching types from currently loaded AppDomain assemblies,
+which enables pathless discovery workflows. You can also pipe a runtime `System.Type` directly to `Get-Type`.
 
 ## EXAMPLES
 
@@ -52,11 +59,27 @@ This command streams public enum types and selects `FullName` and `Kind` for con
 ### Example 4: Reuse a custom decompiler
 
 ```powershell
-PS C:\> $decompiler = Get-Decompiler -Path "MyLibrary.dll"
+PS C:\> $decompiler = New-Decompiler -Path "MyLibrary.dll"
 PS C:\> Get-Type -Path "MyLibrary.dll" -Decompiler $decompiler -PublicOnly
 ```
 
 This command reuses a pre-created decompiler instance.
+
+### Example 5: Resolve a loaded type by name without a file path
+
+```powershell
+PS C:\> Get-Type -TypeName System.Management.Automation.LanguagePrimitives
+```
+
+This command resolves the type from assemblies currently loaded in the PowerShell process.
+
+### Example 6: Pipe a runtime type into Get-Type
+
+```powershell
+PS C:\> [System.Management.Automation.LanguagePrimitives] | Get-Type
+```
+
+This command converts the runtime type into `ISpyTypeInfo` output.
 
 ## PARAMETERS
 
@@ -74,6 +97,30 @@ Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
+```
+
+### -TypeName
+
+Resolve type metadata from already-loaded assemblies by full type name or simple type name.
+
+```yaml
+Type: String
+Parameter Sets: ByTypeName
+Required: True
+Position: 0
+Accept pipeline input: False
+```
+
+### -InputObject
+
+Pipeline input object. Supports assembly path strings and runtime `System.Type` values.
+
+```yaml
+Type: Object
+Parameter Sets: ByInputObject
+Required: False
+Position: 0
+Accept pipeline input: True (ByValue)
 ```
 
 ### -Namespace
@@ -109,7 +156,7 @@ Required: False
 Accept pipeline input: False
 ```
 
-### -TypeKinds
+### -Typekind
 
 Filter by one or more type kinds.
 Other, Class, Interface, Struct, Delegate, Enum, Void, Unknown, Null, None, Dynamic, UnboundTypeArgument, TypeParameter, Array, Pointer, ByReference, Intersection, ArgList, Tuple, ModOpt, ModReq, NInt, NUInt, FunctionPointer
@@ -158,6 +205,8 @@ Accept pipeline input: False
 
 ### System.String
 
+### System.Type
+
 ## OUTPUTS
 
 ### ISpy.Models.ISpyTypeInfo
@@ -173,4 +222,4 @@ Each returned object contains the type's name, namespace, accessibility flags, `
 
 [Get-AssemblyInfo](Get-AssemblyInfo.md)
 [Get-Dependency](Get-Dependency.md)
-[Show-Type](Show-Type.md)
+[Expand-Type](Expand-Type.md)

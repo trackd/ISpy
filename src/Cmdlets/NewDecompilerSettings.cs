@@ -9,7 +9,9 @@ public class NewDecompilerSettingCmdlet : PSCmdlet, IDynamicParameters {
     [Parameter(HelpMessage = "C# Language version to be used by the decompiler")]
     public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
 
-    [Parameter]
+    [Parameter(
+        HelpMessage = "Use New-DecompilerFormattingOption to create a formatting options object with specific settings."
+    )]
     public CSharpFormattingOptions? CSharpFormattingOptions { get; set; }
     public object GetDynamicParameters() {
         dynamicParameters ??= DecompilerSettingsDynamicParameters.CreateSwitchParameters();
@@ -18,12 +20,7 @@ public class NewDecompilerSettingCmdlet : PSCmdlet, IDynamicParameters {
 
     protected override void EndProcessing() {
 
-        var settings = new DecompilerSettings(LanguageVersion) {
-            ThrowOnAssemblyResolveErrors = false,
-            UseDebugSymbols = false,
-            ShowDebugInfo = false,
-            UsingDeclarations = true,
-        };
+        var settings = new DecompilerSettings(LanguageVersion);
 
         if (CSharpFormattingOptions is not null)
             settings.CSharpFormattingOptions = CSharpFormattingOptions;

@@ -68,6 +68,10 @@ Describe "Get-DecompiledSource cmdlet" {
     }
 
     Context "Error handling" {
+        It "Get-DecompiledSource_MissingPathAndTypeName_Throws" {
+            { Get-DecompiledSource -ErrorAction Stop } | Should -Throw
+        }
+
         It "Get-DecompiledSource_MissingAssembly_Throws" {
             { Get-DecompiledSource -Path 'NonExistent.dll' -ErrorAction Stop } | Should -Throw
         }

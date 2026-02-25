@@ -7,6 +7,10 @@ BeforeAll {
 }
 
 Describe "Get-AssemblyInfo cmdlet" {
+    It "Get-AssemblyInfo_MissingPathAndTypeName_Throws" {
+        { Get-AssemblyInfo -ErrorAction Stop } | Should -Throw
+    }
+
     It "Get-AssemblyInfo_GivenPath_ReturnsMetadata" {
         $result = Get-AssemblyInfo -Path $Script:TestAssembly
 
@@ -21,6 +25,15 @@ Describe "Get-AssemblyInfo cmdlet" {
 
         $result.FilePath | Should -Be $Script:TestAssembly
     }
+
+    It "Get-AssemblyInfo_TypeNameOnly_ResolvesLoadedAssembly" {
+        $result = Get-AssemblyInfo -TypeName 'System.Web.HttpUtility'
+
+        $result | Should -Not -BeNull
+        $result.FilePath | Should -Be $Script:TestAssembly
+        $result.Name | Should -Be $Script:TestAssemblyName
+    }
+
     It "Should have Help and examples" {
         $help = Get-Help Get-AssemblyInfo -Full
         $help.Synopsis | Should -Not -BeNullOrEmpty
