@@ -61,12 +61,6 @@ This module exposes the following cmdlets for assembly analysis and decompilatio
 
 ## Examples
 
-### Pick a DLL from your PowerShell installation
-
-```powershell
-Join-Path $PSHOME 'System.Console.dll'
-```
-
 ### Quick Start: list a few types
 
 ```powershell
