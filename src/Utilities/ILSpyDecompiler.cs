@@ -1,4 +1,4 @@
-﻿namespace ISpy.Utilities;
+namespace ISpy.Utilities;
 
 internal static class ILSpyDecompiler {
     public static string DecompileMethod(MethodBase method, bool showXmlDocumentation = false, CSharpDecompiler? decompiler = null) {
@@ -116,6 +116,7 @@ internal static class ILSpyDecompiler {
         fmt.ElseNewLinePlacement = NewLinePlacement.NewLine;
         fmt.ElseIfNewLinePlacement = NewLinePlacement.NewLine;
         fmt.FinallyNewLinePlacement = NewLinePlacement.NewLine;
+        fmt.WhileNewLinePlacement = NewLinePlacement.NewLine;
 
         // Indentation and block layout
         fmt.IndentBlocks = true;

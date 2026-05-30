@@ -85,6 +85,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -AlwaysMoveInitializer
+
+Set DecompilerSettings.AlwaysMoveInitializer to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -AlwaysQualifyMemberReferences
 
 Set DecompilerSettings.AlwaysQualifyMemberReferences to $true.
@@ -272,6 +283,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -CheckForOverflowUnderflow
+
+Set DecompilerSettings.CheckForOverflowUnderflow to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -CovariantReturns
 
 Set DecompilerSettings.CovariantReturns to $true.
@@ -383,6 +405,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -ExpandParamsArguments
+
+Set DecompilerSettings.ExpandParamsArguments to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -ExpandUsingDeclarations
 
 Set DecompilerSettings.ExpandUsingDeclarations to $true.
@@ -397,6 +430,17 @@ Accept pipeline input: False
 ### -ExpressionTrees
 
 Set DecompilerSettings.ExpressionTrees to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -ExtensionMembers
+
+Set DecompilerSettings.ExtensionMembers to $true.
 
 ```yaml
 Type: SwitchParameter
@@ -430,6 +474,17 @@ Accept pipeline input: False
 ### -FileScopedNamespaces
 
 Set DecompilerSettings.FileScopedNamespaces to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -FirstClassSpanTypes
+
+Set DecompilerSettings.FirstClassSpanTypes to $true.
 
 ```yaml
 Type: SwitchParameter
@@ -526,6 +581,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -InlineArrays
+
+Set DecompilerSettings.InlineArrays to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -IntroduceIncrementAndDecrement
 
 Set DecompilerSettings.IntroduceIncrementAndDecrement to $true.
@@ -584,7 +650,7 @@ Accept pipeline input: False
 ### -LanguageVersion
 
 C# Language version to be used by the decompiler  
-Accepted values: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0, CSharp11_0, Preview, CSharp12_0, Latest.
+Accepted values: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, CSharp14_0, CSharp15_0, Preview, Latest.
 
 ```yaml
 Type: LanguageVersion
@@ -758,6 +824,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -ParamsCollections
+
+Set DecompilerSettings.ParamsCollections to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -PatternBasedFixedStatement
 
 Set DecompilerSettings.PatternBasedFixedStatement to $true.
@@ -923,6 +1000,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -RuntimeAsync
+
+Set DecompilerSettings.RuntimeAsync to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -ScopedRef
 
 Set DecompilerSettings.ScopedRef to $true.
@@ -1025,6 +1113,17 @@ Accept pipeline input: False
 ### -StringInterpolation
 
 Set DecompilerSettings.StringInterpolation to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -StructDefaultConstructorsAndFieldInitializers
+
+Set DecompilerSettings.StructDefaultConstructorsAndFieldInitializers to $true.
 
 ```yaml
 Type: SwitchParameter
@@ -1190,6 +1289,17 @@ Accept pipeline input: False
 ### -UseNestedDirectoriesForNamespaces
 
 Set DecompilerSettings.UseNestedDirectoriesForNamespaces to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -UseObjectCreationOfGenericTypeParameter
+
+Set DecompilerSettings.UseObjectCreationOfGenericTypeParameter to $true.
 
 ```yaml
 Type: SwitchParameter
