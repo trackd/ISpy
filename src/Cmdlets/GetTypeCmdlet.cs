@@ -10,7 +10,7 @@ public class GetTypeCmdlet : PSCmdlet {
         HelpMessage = "Path to the assembly file to analyze",
         ParameterSetName = "ByPath"
     )]
-    [Alias("AssemblyPath", "PSPath", "FilePath")]
+    [Alias("AssemblyPath", "FullName", "FilePath")]
     [ValidateNotNullOrEmpty]
     public string? Path { get; set; }
 
@@ -79,8 +79,14 @@ public class GetTypeCmdlet : PSCmdlet {
                         return;
                     }
 
-                    if (pipelineValue is string pipedPath) {
-                        string? resolvedInputPath = ResolveAssemblyPath(pipedPath);
+                    string? candidatePath = pipelineValue switch {
+                        string s => s,
+                        FileInfo fi => fi.FullName,
+                        _ => null
+                    };
+
+                    if (candidatePath is not null) {
+                        string? resolvedInputPath = ResolveAssemblyPath(candidatePath);
                         if (resolvedInputPath is null)
                             return;
 

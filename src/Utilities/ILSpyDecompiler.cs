@@ -74,6 +74,14 @@ internal static class ILSpyDecompiler {
             FileScopedNamespaces = true
         };
 
+        ApplyStroustrupFormatting(settings);
+
+        return DecompilerFactory.Create(assemblyPath, settings);
+    }
+
+    internal static DecompilerSettings ApplyStroustrupFormatting(DecompilerSettings settings) {
+        ArgumentNullException.ThrowIfNull(settings);
+
         // formatting options for Stroustrup-ish style:
 
         CSharpFormattingOptions fmt = settings.CSharpFormattingOptions;
@@ -84,8 +92,8 @@ internal static class ILSpyDecompiler {
         fmt.StructBraceStyle = BraceStyle.EndOfLine;
         fmt.EnumBraceStyle = BraceStyle.EndOfLine;
         fmt.StatementBraceStyle = BraceStyle.EndOfLine;
-        fmt.ConstructorBraceStyle = BraceStyle.EndOfLine;
         fmt.PropertyBraceStyle = BraceStyle.EndOfLine;
+        fmt.ConstructorBraceStyle = BraceStyle.EndOfLine;
         fmt.PropertyGetBraceStyle = BraceStyle.EndOfLine;
         fmt.PropertySetBraceStyle = BraceStyle.EndOfLine;
         fmt.EventBraceStyle = BraceStyle.EndOfLine;
@@ -104,7 +112,10 @@ internal static class ILSpyDecompiler {
         fmt.NewLineAferMethodCallOpenParentheses = NewLinePlacement.SameLine;
         fmt.MethodDeclarationParameterWrapping = Wrapping.WrapIfTooLong;
         fmt.MethodCallArgumentWrapping = Wrapping.WrapIfTooLong;
-        fmt.CatchNewLinePlacement = NewLinePlacement.SameLine;
+        fmt.CatchNewLinePlacement = NewLinePlacement.NewLine;
+        fmt.ElseNewLinePlacement = NewLinePlacement.NewLine;
+        fmt.ElseIfNewLinePlacement = NewLinePlacement.NewLine;
+        fmt.FinallyNewLinePlacement = NewLinePlacement.NewLine;
 
         // Indentation and block layout
         fmt.IndentBlocks = true;
@@ -137,8 +148,7 @@ internal static class ILSpyDecompiler {
         fmt.RemoveEndOfLineWhiteSpace = true;
         fmt.AlignElseInIfStatements = true;
 
-
-        return DecompilerFactory.Create(assemblyPath, settings);
+        return settings;
     }
 
 }
