@@ -24,7 +24,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="System.Management.Automation" Version="7.4" PrivateAssets="all" />
-        <PackageReference Include="ICSharpCode.Decompiler" Version="9.1.0.7988" />
+        <PackageReference Include="ICSharpCode.Decompiler" Version="10.1.0.8386" />
         <PackageReference Include="Roslynator.Analyzers" Version="4.*">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
