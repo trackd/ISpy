@@ -106,6 +106,10 @@ public static class SourceOutputFactory {
         if (method is not null)
             AddNamespaceHeaderComment(remaining, declaringTypeFullName);
 
+        // Keep intentional spacing inside the body, but avoid trailing blank lines at EOF.
+        while (remaining.Count > 0 && string.IsNullOrWhiteSpace(remaining[^1]))
+            remaining.RemoveAt(remaining.Count - 1);
+
         // XML comment shaping is controlled by decompiler settings (ShowXmlDocumentation)
         // and not altered here.
 

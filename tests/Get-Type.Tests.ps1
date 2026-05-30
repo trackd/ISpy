@@ -73,4 +73,12 @@ Describe "Get-Type cmdlet" {
         $result | Should -BeOfType ISpy.Models.ISpyTypeInfo
         $result.FullName | Should -Be 'System.Management.Automation.LanguagePrimitives'
     }
+
+    It "Get-Type_ShouldWorkWithFileInfoObjects" {
+        $result = Get-Item (Get-Module ISpy).Path | Get-Type | Select-Object -First 1
+
+        $result | Should -Not -BeNull
+        $result | Should -BeOfType ISpy.Models.ISpyTypeInfo
+        $result.FullName | Should -Match '^ISpy'
+    }
 }
