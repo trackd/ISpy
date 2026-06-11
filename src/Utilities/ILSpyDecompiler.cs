@@ -3,9 +3,8 @@ namespace ISpy.Utilities;
 internal static class ILSpyDecompiler {
     public static string DecompileMethod(MethodBase method, bool showXmlDocumentation = false, CSharpDecompiler? decompiler = null) {
         string? assemblyPath = method.Module?.FullyQualifiedName ?? method.DeclaringType?.Assembly.Location;
-        return string.IsNullOrEmpty(assemblyPath)
-            ? throw new InvalidOperationException("Unable to determine the assembly path for the selected method.")
-            : DecompileToken(assemblyPath, method.MetadataToken, showXmlDocumentation: showXmlDocumentation, decompiler: decompiler);
+        ArgumentGuards.ThrowIfNullOrWhiteSpace(assemblyPath, nameof(method));
+        return DecompileToken(assemblyPath, method.MetadataToken, showXmlDocumentation: showXmlDocumentation, decompiler: decompiler);
     }
 
     public static string DecompileType(string assemblyPath, FullTypeName fullTypeName, bool showXmlDocumentation = false, bool useUsingDeclarations = true, CSharpDecompiler? decompiler = null) {
@@ -14,7 +13,7 @@ internal static class ILSpyDecompiler {
     }
 
     public static string DecompileMethods(IEnumerable<MethodBase> methods, bool showXmlDocumentation = false, bool useUsingDeclarations = true, CSharpDecompiler? decompiler = null) {
-        ArgumentNullException.ThrowIfNull(methods);
+        ArgumentGuards.ThrowIfNull(methods, nameof(methods));
 
         string? assemblyPath = null;
         var handles = new List<EntityHandle>();
@@ -74,13 +73,13 @@ internal static class ILSpyDecompiler {
             FileScopedNamespaces = true
         };
 
-        ApplyStroustrupFormatting(settings);
+        _ = ApplyStroustrupFormatting(settings);
 
         return DecompilerFactory.Create(assemblyPath, settings);
     }
 
     internal static DecompilerSettings ApplyStroustrupFormatting(DecompilerSettings settings) {
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentGuards.ThrowIfNull(settings, nameof(settings));
 
         // formatting options for Stroustrup-ish style:
 

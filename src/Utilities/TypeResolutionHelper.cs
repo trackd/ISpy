@@ -97,7 +97,7 @@ internal static class TypeResolutionHelper {
             return null;
 
         string? assemblyPath = method.Module?.FullyQualifiedName ?? method.DeclaringType?.Assembly.Location;
-        return string.IsNullOrEmpty(assemblyPath) ? null : new ResolvedMethodTarget(method, assemblyPath);
+        return string.IsNullOrEmpty(assemblyPath) ? null : new ResolvedMethodTarget(method, assemblyPath!);
     }
 
     private static bool TryExtractMethod(object input, out MethodBase? method) {

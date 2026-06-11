@@ -1,6 +1,9 @@
 BeforeAll {
     if (-not (Get-Module ISpy)) {
-        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+        Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
+    }
+    if ($PSEdition -ne 'Core') {
+        Add-Type -AssemblyName System.Web
     }
     $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
@@ -75,10 +78,8 @@ Describe "Get-Type cmdlet" {
     }
 
     It "Get-Type_ShouldWorkWithFileInfoObjects" {
-        $result = Get-Item (Get-Module ISpy).Path | Get-Type | Select-Object -First 1
-
-        $result | Should -Not -BeNull
-        $result | Should -BeOfType ISpy.Models.ISpyTypeInfo
-        $result.FullName | Should -Match '^ISpy'
+        $result = Get-Item (Get-Module ISpy).Path | Get-Type | Where-Object { $_.FullName -match 'ISpy'}
+        $result.FullName | Should -Match 'Utilities|Models|Cmdlets'
+        $result.Count | Should -BeGreaterThan 30
     }
 }

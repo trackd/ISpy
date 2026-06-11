@@ -39,7 +39,8 @@ public class GetDependencyCmdlet : PSCmdlet {
                     new FileNotFoundException($"Assembly file not found: {resolvedPath}"),
                     "AssemblyNotFound",
                     ErrorCategory.InvalidArgument,
-                    resolvedPath));
+                    resolvedPath
+                ));
                 return;
             }
 
@@ -66,7 +67,8 @@ public class GetDependencyCmdlet : PSCmdlet {
                 Version version = reference.Version;
                 string culture = reference.Culture.IsNil ? "neutral" : metadataReader.GetString(reference.Culture);
                 string publicKeyOrToken = reference.PublicKeyOrToken.IsNil ? "null" :
-                    Convert.ToHexString(metadataReader.GetBlobBytes(reference.PublicKeyOrToken)).ToLowerInvariant();
+                    string.Concat(metadataReader.GetBlobBytes(reference.PublicKeyOrToken).
+                    Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
 
                 var dependencyInfo = new ISpyDependencyInfo {
                     Name = name,
@@ -94,10 +96,10 @@ public class GetDependencyCmdlet : PSCmdlet {
     }
 
     private string? ResolveAssemblyPathFromInput(string? path, string? typeName) {
-        if (!string.IsNullOrWhiteSpace(path))
-            return GetUnresolvedProviderPathFromPSPath(path);
+        if (path is { Length: > 0 } pathInput && !string.IsNullOrWhiteSpace(pathInput))
+            return GetUnresolvedProviderPathFromPSPath(pathInput);
 
-        if (string.IsNullOrWhiteSpace(typeName)) {
+        if (typeName is not { Length: > 0 } requestedTypeName || string.IsNullOrWhiteSpace(requestedTypeName)) {
             WriteError(new ErrorRecord(
                 new ArgumentException("Path or TypeName must be provided."),
                 "MissingPathOrTypeName",
@@ -106,12 +108,12 @@ public class GetDependencyCmdlet : PSCmdlet {
             return null;
         }
 
-        if (!LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? loadedType) || loadedType is null) {
+        if (!LoadedTypeResolver.TryResolveLoadedType(requestedTypeName, out Type? loadedType) || loadedType is null) {
             WriteError(new ErrorRecord(
-                new ArgumentException($"Loaded type not found: {typeName}"),
+                new ArgumentException($"Loaded type not found: {requestedTypeName}"),
                 "LoadedTypeNotFound",
                 ErrorCategory.ObjectNotFound,
-                typeName));
+                requestedTypeName));
             return null;
         }
 
@@ -120,10 +122,10 @@ public class GetDependencyCmdlet : PSCmdlet {
         }
         catch {
             WriteError(new ErrorRecord(
-                new FileNotFoundException($"Assembly location is unavailable for loaded type: {typeName}"),
+                new FileNotFoundException($"Assembly location is unavailable for loaded type: {requestedTypeName}"),
                 "AssemblyNotFound",
                 ErrorCategory.ObjectNotFound,
-                typeName));
+                requestedTypeName));
             return null;
         }
     }

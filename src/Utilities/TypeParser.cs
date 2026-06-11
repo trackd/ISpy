@@ -39,7 +39,11 @@ internal static class TypesParser {
             foreach (string value in values) {
                 string v = value;
                 while (v.Length > 0 && !possibleValues.ContainsKey(v))
+#if NETSTANDARD2_0
+                    v = v.Substring(0, v.Length - 1);
+#else
                     v = v[..^1];
+#endif
                 if (possibleValues.TryGetValue(v, out TypeKind kind))
                     kinds.Add(kind);
             }

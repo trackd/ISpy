@@ -1,11 +1,11 @@
 BeforeAll {
     if (-not (Get-Module ISpy)) {
-        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+        Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
     }
     # Use a small local assembly (ICSharpCode.Decompiler) to keep decompilation fast
-    $Script:TestAssembly = "$PSScriptRoot\..\output\lib\ICSharpCode.Decompiler.dll"
+    $Script:TestAssembly = [IO.Path]::Combine($PSScriptRoot, '..', 'output', 'netstandard2.0', 'ICSharpCode.Decompiler.dll')
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
-    $Script:TestOutputDir = "$PSScriptRoot\TestOutput"
+    $Script:TestOutputDir = [IO.Path]::Combine($PSScriptRoot, 'TestOutput')
     $script:typeNames = @('ISpy.Models.ISpyAssemblyInfo', 'ISpy.Models.ISpyTypeInfo')
 
 }

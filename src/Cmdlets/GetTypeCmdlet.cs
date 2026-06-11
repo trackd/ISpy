@@ -96,8 +96,18 @@ public class GetTypeCmdlet : PSCmdlet {
                     return;
 
                 case "ByTypeName": {
+                        if (TypeName is not { Length: > 0 } requestedTypeName) {
+                            WriteError(new ErrorRecord(
+                                new ArgumentException("TypeName must be provided."),
+                                "MissingTypeName",
+                                ErrorCategory.InvalidArgument,
+                                this
+                            ));
+                            return;
+                        }
+
                         bool any = false;
-                        foreach (Type type in LoadedTypeResolver.FindLoadedTypesByName(TypeName ?? string.Empty)) {
+                        foreach (Type type in LoadedTypeResolver.FindLoadedTypesByName(requestedTypeName)) {
                             if (!criteria.Matches(type))
                                 continue;
 
@@ -110,15 +120,13 @@ public class GetTypeCmdlet : PSCmdlet {
                                 new ArgumentException($"Loaded type not found: {TypeName}"),
                                 "LoadedTypeNotFound",
                                 ErrorCategory.ObjectNotFound,
-                                TypeName));
+                                TypeName
+                            ));
                         }
 
                         return;
                     }
 
-                case "ByPath":
-                default:
-                    break;
             }
 
             string? resolvedPath = ResolveAssemblyPath(Path);
@@ -159,9 +167,9 @@ public class GetTypeCmdlet : PSCmdlet {
         }
     }
     private WildcardPattern? BuildNameMatcher()
-        => string.IsNullOrWhiteSpace(NamePattern)
+        => NamePattern is not { Length: > 0 } pattern || string.IsNullOrWhiteSpace(pattern)
             ? null
-            : new WildcardPattern(NamePattern, WildcardOptions.IgnoreCase);
+            : new WildcardPattern(pattern, WildcardOptions.IgnoreCase);
 
     private static IEnumerable<ITypeDefinition> FilterTypes(IEnumerable<ITypeDefinition> candidates, TypeSearchCriteria criteria) {
         foreach (ITypeDefinition type in candidates) {

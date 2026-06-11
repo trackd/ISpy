@@ -9,7 +9,7 @@ public static class SourceOutputFactory {
     /// <param name="extension"></param>
     /// <returns></returns>
     public static PSObject Create(string source, string fileBaseName, string extension = ".cs") {
-        ArgumentNullException.ThrowIfNull(source);
+        ArgumentGuards.ThrowIfNull(source, nameof(source));
 
         if (string.IsNullOrEmpty(fileBaseName))
             fileBaseName = "decompiled";
@@ -26,11 +26,21 @@ public static class SourceOutputFactory {
     /// <param name="declaringTypeFullName"></param>
     /// <returns></returns>
     public static string GetFileBaseNameFromTypeName(string? declaringTypeFullName) {
-        return string.IsNullOrEmpty(declaringTypeFullName)
-            ? "decompiled"
-            : declaringTypeFullName.Contains('.')
-            ? declaringTypeFullName[(declaringTypeFullName.LastIndexOf('.') + 1)..]
-            : declaringTypeFullName;
+        if (declaringTypeFullName is not { Length: > 0 } nonNullTypeName)
+            return "decompiled";
+
+        int dotIndex = nonNullTypeName.LastIndexOf('.');
+#if NETSTANDARD2_0
+        // System.Range is not available in netstandard2.0.
+        return dotIndex >= 0
+            ? nonNullTypeName.Substring(dotIndex + 1)
+            : nonNullTypeName;
+
+#else
+        return dotIndex >= 0
+            ? nonNullTypeName[(dotIndex + 1)..]
+            : nonNullTypeName;
+#endif
     }
 
     /// <summary>
@@ -85,12 +95,23 @@ public static class SourceOutputFactory {
             remaining = [..
                 remaining.Where(l => {
                     string trimmed = l.Trim();
-                    if (trimmed.StartsWith("global using ", StringComparison.Ordinal) && trimmed.EndsWith(';'))
+                    if (trimmed.StartsWith("global using ", StringComparison.Ordinal)
+#if NETSTANDARD2_0
+                        && trimmed.EndsWith(";", StringComparison.Ordinal)
+#else
+                        && trimmed.EndsWith(';')
+#endif
+                    ) {
                         return false;
+                    }
 
                     if (trimmed.StartsWith("using ", StringComparison.Ordinal)
+#if NETSTANDARD2_0
+                        && trimmed.EndsWith(";", StringComparison.Ordinal)
+#else
                         && trimmed.EndsWith(';')
-                        && !trimmed.Contains('(')
+#endif
+                        && trimmed.IndexOf('(') < 0
                         && !trimmed.StartsWith("using var ", StringComparison.Ordinal)) {
                         return false;
                     }
@@ -107,7 +128,7 @@ public static class SourceOutputFactory {
             AddNamespaceHeaderComment(remaining, declaringTypeFullName);
 
         // Keep intentional spacing inside the body, but avoid trailing blank lines at EOF.
-        while (remaining.Count > 0 && string.IsNullOrWhiteSpace(remaining[^1]))
+        while (remaining.Count > 0 && string.IsNullOrWhiteSpace(remaining[remaining.Count - 1]))
             remaining.RemoveAt(remaining.Count - 1);
 
         // XML comment shaping is controlled by decompiler settings (ShowXmlDocumentation)
@@ -128,7 +149,11 @@ public static class SourceOutputFactory {
         if (namespaceLine is not null) {
             ns = namespaceLine.Trim();
             if (ns.StartsWith("namespace ", StringComparison.Ordinal))
+#if NETSTANDARD2_0
+                ns = ns.Substring("namespace ".Length);
+#else
                 ns = ns["namespace ".Length..];
+#endif
 
             ns = ns.TrimEnd(';').Trim();
         }

@@ -2,8 +2,8 @@
 
 internal static class DecompilerFactory {
     public static CSharpDecompiler Create(string assemblyPath, DecompilerSettings settings) {
-        ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentGuards.ThrowIfNullOrWhiteSpace(assemblyPath, nameof(assemblyPath));
+        ArgumentGuards.ThrowIfNull(settings, nameof(settings));
 
         string targetFrameworkId = DetectTargetFrameworkId(assemblyPath);
         var resolver = new UniversalAssemblyResolver(

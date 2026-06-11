@@ -31,26 +31,31 @@ public class NewDecompilerCmdlet : PSCmdlet {
 
     protected override void ProcessRecord() {
         try {
-            string resolvedPath = GetUnresolvedProviderPathFromPSPath(Path);
+            if (Path is not { Length: > 0 } assemblyPathInput)
+                return;
+
+            string resolvedPath = GetUnresolvedProviderPathFromPSPath(assemblyPathInput);
 
             if (!File.Exists(resolvedPath)) {
                 WriteError(new ErrorRecord(
                     new FileNotFoundException($"Assembly file not found: {resolvedPath}"),
                     "AssemblyNotFound",
                     ErrorCategory.InvalidArgument,
-                    resolvedPath));
+                    resolvedPath
+                ));
                 return;
             }
 
             string? pdbPath = null;
-            if (!string.IsNullOrEmpty(PDBFilePath)) {
-                pdbPath = GetUnresolvedProviderPathFromPSPath(PDBFilePath);
+            if (PDBFilePath is { Length: > 0 } pdbFilePathInput) {
+                pdbPath = GetUnresolvedProviderPathFromPSPath(pdbFilePathInput);
                 if (!File.Exists(pdbPath)) {
                     WriteError(new ErrorRecord(
                         new FileNotFoundException($"PDB file not found: {pdbPath}"),
                         "PDBNotFound",
                         ErrorCategory.InvalidArgument,
-                        pdbPath));
+                        pdbPath
+                    ));
                     return;
                 }
             }
@@ -79,7 +84,8 @@ public class NewDecompilerCmdlet : PSCmdlet {
                 ex,
                 "DecompilerCreationError",
                 ErrorCategory.OperationStopped,
-                Path));
+                Path
+            ));
         }
     }
 }
