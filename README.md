@@ -4,7 +4,8 @@ A PowerShell module for decompiling .NET assemblies using the ILSpy decompiler e
 
 ## Overview
 
-ISpy module provides comprehensive cmdlets to decompile .NET assemblies into readable C# source code. Built on top of the ICSharpCode.Decompiler library (the engine behind ILSpy), it offers a powerful command-line interface for .NET assembly analysis and decompilation tasks.  
+ISpy module provides comprehensive cmdlets to decompile .NET assemblies into readable C# source code.  
+Built on top of the ICSharpCode.Decompiler library (the engine behind ILSpy), it offers a powerful command-line interface for .NET assembly analysis and decompilation tasks.  
 
 ### Key Features
 
@@ -25,7 +26,8 @@ Install-Module ISpy
 
 ### Prerequisites
 
-- **PowerShell**: 7.4
+- **PowerShell**: 7.6
+- **Windows Powershell**: 5.1
 
 ### Building from Source
 
@@ -61,10 +63,22 @@ This module exposes the following cmdlets for assembly analysis and decompilatio
 
 ## Examples
 
+### Expand just one method (small, focused output)
+
+```powershell
+[Math]::Truncate | Expand-Type
+```
+
+### Expand a PowerShell cmdlet
+
+```powershell
+Get-Command Get-ChildItem | Expand-Type
+```
+
 ### Quick Start: list a few types
 
 ```powershell
-Get-Type -Path (Join-Path $PSHOME 'System.Console.dll')
+Get-Item (Get-Module ISpy).Path | Get-Type
 ```
 
 ### Find types by name pattern
@@ -82,7 +96,7 @@ Get-AssemblyInfo -Path (Join-Path $PSHOME 'System.Console.dll')
 ### Show external dependencies
 
 ```powershell
-Get-Dependency -Path (Join-Path $PSHOME 'System.Console.dll') -ExternalOnly
+Get-Item (Get-Module ISpy).Path | Get-Dependency -ExternalOnly
 ```
 
 ### Preview one type's decompiled source object
@@ -91,34 +105,7 @@ Get-Dependency -Path (Join-Path $PSHOME 'System.Console.dll') -ExternalOnly
 Get-DecompiledSource -Path (Join-Path $PSHOME 'System.Console.dll') | Select-Object -First 1
 ```
 
-### Expand just one method (small, focused output)
-
-```powershell
-Expand-Type -Path (Join-Path $PSHOME 'System.Console.dll') -TypeName 'System.Console' -MethodName 'WriteLine' | Select-Object -First 3
-```
-
 ### Custom decompilersettings / formatting
-
-```powershell
-# custom decompiler + settings + formatting
-$formatSplat = @{
-    ClassBraceStyle = 'NextLine'
-    IndentationString = '  '
-    MethodBraceStyle = 'NextLine'
-    NewLineAferIndexerOpenBracket = 'NewLine'
-    ChainedMethodCallWrapping = 'WrapAlways'
-}
-$decompilersettingsplat = @{
-    AlwaysUseBraces = $true
-    CSharpFormattingOptions = New-DecompilerFormattingOption @formatSplat
-}
-$decompilerSplat = @{ 
-    Path = Join-Path $PSHOME 'System.Console.dll' 
-    DecompilerSettings = New-DecompilerSetting @decompilersettingsplat
-}
-$decompiler = New-Decompiler @decompilerSplat
-Expand-Type -Decompiler $decompiler -TypeName 'System.Console' -MethodName 'Write'
-```
 
 ```powershell
 # settings + formatting
@@ -141,7 +128,7 @@ $options = @{
     CSharpFormattingOptions = New-DecompilerFormattingOption @formatSplat
 }
 $Settings = New-DecompilerSetting @options
-Expand-Type -Settings $Settings -TypeName 'System.Console' -MethodName 'Write'
+[System.Console]::Write | Expand-Type -Settings $Settings
 ```
 
 see  `docs/en-us/` for more examples.
@@ -162,10 +149,6 @@ ISpy/
 └── build.ps1               # Build script
 ```
 
-## Dependencies
-
-- **ICSharpCode.Decompiler**: Core decompilation engine from [ILSpy](https://github.com/icsharpcode/ILSpy)
-
 ## Contributing
 
 1. Fork the repository
@@ -180,8 +163,7 @@ This project follows the same license terms as the ISpy project it's based on.
 
 ## Libraries
 
-- [ILSpy](https://github.com/icsharpcode/ILSpy) - The original .NET decompiler GUI application
-- [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) - The decompiler engine NuGet package
+- [ILSpy](https://github.com/icsharpcode/ILSpy)
 
 ---
 
