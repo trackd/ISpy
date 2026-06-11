@@ -22,8 +22,8 @@ internal static class DecompilerSettingsDynamicParameters {
     }
 
     public static void ApplyBoundSwitches(IDictionary boundParameters, DecompilerSettings settings) {
-        ArgumentNullException.ThrowIfNull(boundParameters);
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentGuards.ThrowIfNull(boundParameters, nameof(boundParameters));
+        ArgumentGuards.ThrowIfNull(settings, nameof(settings));
 
         foreach (KeyValuePair<string, PropertyInfo> property in BoolSettingsProperties.Value) {
             if (!boundParameters.Contains(property.Key))

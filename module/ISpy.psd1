@@ -1,13 +1,21 @@
 @{
     # Module manifest for ISpy
-    RootModule             = 'lib/ISpy.dll'
-    ModuleVersion          = '0.4.1'
+    RootModule           = if ($PSEdition -eq 'Core') {
+        'net10.0/ISpy.dll'
+    }
+    else {
+        'netstandard2.0/ISpy.dll'
+    }
+    ModuleVersion          = '0.5.0'
     GUID                   = '15ad5935-21a2-4eed-aeec-2232c7507dc2'
     Author                 = 'trackd'
     CompanyName            = 'trackd'
     Copyright              = '(c) trackd. All rights reserved.'
     Description            = 'PowerShell module for decompiling .NET assemblies using ILSpy decompiler. Provides comprehensive cmdlets for assembly analysis, type discovery, method examination, and source code decompilation with advanced filtering and export capabilities.'
-    PowerShellVersion      = '7.4'
+    # PowerShellVersion      = '7.4'
+    PowerShellVersion      = '5.1'
+    DotNetFrameworkVersion = '4.7.2'
+    ClrVersion             = '4.0'
     # DotNetFrameworkVersion = '4.6.1'
     # CLRVersion             = '4.0'
     # ProcessorArchitecture  = 'None'
@@ -51,5 +59,5 @@
             # Prerelease                 = ''
         }
     }
-    HelpInfoURI            = 'https://github.com/trackd/ISpy/tree/main/docs/en-us'
+    # HelpInfoURI            = 'https://github.com/trackd/ISpy/tree/main/docs/en-us'
 }

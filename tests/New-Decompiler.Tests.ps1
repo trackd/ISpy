@@ -1,9 +1,9 @@
 BeforeAll {
 	if (-not (Get-Module ISpy)) {
-		Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+		Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
 	}
 	# Use a small local assembly for fast decompiler creation
-	$Script:TestAssembly = "$PSScriptRoot\..\output\lib\ICSharpCode.Decompiler.dll"
+	$Script:TestAssembly = [IO.Path]::Combine($PSScriptRoot, '..', 'output', 'netstandard2.0', 'ICSharpCode.Decompiler.dll')
 }
 
 Describe 'New-Decompiler cmdlet' {

@@ -14,7 +14,6 @@ $script:folders = @{
     ProjectRoot      = $PSScriptRoot
     SourcePath       = Join-Path $PSScriptRoot 'src'
     OutputPath       = Join-Path $PSScriptRoot 'output'
-    DestinationPath  = Join-Path $PSScriptRoot 'output' 'lib'
     ModuleSourcePath = Join-Path $PSScriptRoot 'module'
     DocsPath         = Join-Path $PSScriptRoot 'docs' 'en-US'
     TestPath         = Join-Path $PSScriptRoot 'tests'
@@ -33,18 +32,27 @@ task Build {
         Write-Warning 'C# project not found, skipping Build'
         return
     }
-    try {
-        Push-Location $folders.SourcePath
-        $buildOutput = dotnet publish $folders.CsprojPath --configuration $Configuration --nologo --verbosity minimal --output $folders.DestinationPath 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "Build failed:`n$buildOutput"
-        }
-    }
-    finally {
-        Pop-Location
+
+    # $ModuleFile = Import-PowerShellDataFile -Path (Join-Path $script:folders.ProjectRoot 'module' "$($script:folders.ModuleName).psd1")
+    [xml]$csproj = Get-Content -Path $folders.CsprojPath -Raw
+    $frameworks = $csproj.
+    SelectNodes('//TargetFramework | //TargetFrameworks').
+    '#text'.
+    Split(';', [StringSplitOptions]::RemoveEmptyEntries)
+
+    $dotnetArgs = @(
+        'publish'
+        $folders.CsprojPath
+        '--configuration', $Configuration
+        '--nologo'
+        '--verbosity', 'minimal'
+        #('-p:Version={0}' -f $ModuleFile.ModuleVersion.ToString())
+    )
+
+    foreach ($fwork in $frameworks) {
+        exec { dotnet @dotnetArgs --framework $fwork --output (Join-Path $folders.OutputPath $fwork) }
     }
 }
-
 task ModuleFiles {
     if (Test-Path $folders.ModuleSourcePath) {
         Get-ChildItem -Path $folders.ModuleSourcePath -File | Copy-Item -Destination $folders.OutputPath -Force
@@ -291,8 +299,8 @@ task Test -if (-not $SkipTests) {
 }
 
 task CleanAfter {
-    if ($script:folders.DestinationPath -and (Test-Path $script:folders.DestinationPath)) {
-        Get-ChildItem -Path $script:folders.DestinationPath -File |
+    if ($script:folders.OutputPath -and (Test-Path $script:folders.OutputPath)) {
+        Get-ChildItem -Path $script:folders.OutputPath -File -Recurse |
             Where-Object { $_.Extension -in @('.pdb', '.json') } |
             Remove-Item -Force -ErrorAction Ignore
     }

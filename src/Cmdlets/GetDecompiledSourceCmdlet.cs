@@ -41,7 +41,7 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
             string? resolvedTypeName = TypeName;
 
             if (string.IsNullOrWhiteSpace(candidatePath)) {
-                if (string.IsNullOrWhiteSpace(TypeName)) {
+                if (TypeName is not { Length: > 0 } requestedTypeName || string.IsNullOrWhiteSpace(requestedTypeName)) {
                     WriteError(new ErrorRecord(
                         new ArgumentException("Path or TypeName must be provided."),
                         "MissingPathOrTypeName",
@@ -50,12 +50,12 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
                     return;
                 }
 
-                if (!LoadedTypeResolver.TryResolveLoadedType(TypeName, out Type? loadedType) || loadedType is null) {
+                if (!LoadedTypeResolver.TryResolveLoadedType(requestedTypeName, out Type? loadedType) || loadedType is null) {
                     WriteError(new ErrorRecord(
-                        new InvalidOperationException($"Loaded type not found: {TypeName}"),
+                        new InvalidOperationException($"Loaded type not found: {requestedTypeName}"),
                         "TypeNotFound",
                         ErrorCategory.ObjectNotFound,
-                        TypeName));
+                        requestedTypeName));
                     return;
                 }
 
@@ -68,23 +68,28 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
 
                 if (string.IsNullOrWhiteSpace(candidatePath)) {
                     WriteError(new ErrorRecord(
-                        new FileNotFoundException($"Assembly location is unavailable for loaded type: {TypeName}"),
+                        new FileNotFoundException($"Assembly location is unavailable for loaded type: {requestedTypeName}"),
                         "AssemblyNotFound",
                         ErrorCategory.ObjectNotFound,
-                        TypeName));
+                        requestedTypeName
+                    ));
                     return;
                 }
 
                 resolvedTypeName = loadedType.FullName ?? loadedType.Name;
             }
 
-            string resolvedPath = GetUnresolvedProviderPathFromPSPath(candidatePath);
+            if (candidatePath is not { Length: > 0 } assemblyPathInput)
+                return;
+
+            string resolvedPath = GetUnresolvedProviderPathFromPSPath(assemblyPathInput);
             if (!File.Exists(resolvedPath)) {
                 WriteError(new ErrorRecord(
                     new FileNotFoundException($"Assembly file not found: {resolvedPath}"),
                     "AssemblyNotFound",
                     ErrorCategory.InvalidArgument,
-                    resolvedPath));
+                    resolvedPath
+                ));
                 return;
             }
 
@@ -118,7 +123,7 @@ public class GetDecompiledSourceCmdlet : PSCmdlet {
             else {
                 // Decompile all types in the assembly
                 var results = new List<ISpyDecompilationResult>();
-                foreach (ITypeDefinition type in decompiler.TypeSystem.MainModule.TypeDefinitions.Where(t => !t.Name.StartsWith('<'))) {
+                foreach (ITypeDefinition type in decompiler.TypeSystem.MainModule.TypeDefinitions.Where(t => !(t.Name.Length > 0 && t.Name[0] == '<'))) {
                     ISpyDecompilationResult result = CreateDecompilationResultForType(decompiler, resolvedPath, type);
                     results.Add(result);
                 }

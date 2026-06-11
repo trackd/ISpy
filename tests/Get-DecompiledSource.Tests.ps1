@@ -1,10 +1,14 @@
 BeforeAll {
     if (-not (Get-Module ISpy)) {
-        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+        Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
     }
-    $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
+    if ($PSEdition -ne 'Core') {
+        Add-Type -AssemblyName System.Web
+    }
+    # $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
+    $Script:TestAssembly = [IO.Path]::Combine($PSScriptRoot, '..', 'output', 'netstandard2.0', 'ISpy.dll')
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
-    $Script:TestOutputDir = "$PSScriptRoot\TestOutput"
+    $Script:TestOutputDir = [IO.Path]::Combine($PSScriptRoot, 'TestOutput')
 }
 
 
@@ -28,14 +32,15 @@ Describe "Get-DecompiledSource cmdlet" {
 
             $result | Should -Not -BeNull
             $result | ForEach-Object { if ($_.TypeName -notmatch '<PrivateImplementationDetails>') { $_.Success } } | Should -Not -Contain $false
-            $result | Where-Object { $_.source -match 'namespace System.Web' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object { $_.source -match 'namespace ISpy.Cmdlets' } | Should -Not -BeNullOrEmpty
         }
 
         It "Get-DecompiledSource_TypeFilter_ReturnsSpecificType" {
-            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $Script:TestAssemblyName
+            $typeName = 'ISpy.Models.ISpyAssemblyInfo'
+            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $typeName
 
-            $result.TypeName | Should -Be $Script:TestAssemblyName
-            [regex]::Match($result.Source,'public sealed class HttpUtility').Success | Should -BeTrue
+            $result.TypeName | Should -Be $typeName
+            [regex]::Match($result.Source, 'public class ISpyAssemblyInfo').Success | Should -BeTrue
             $result.FilePath | Should -BeNull
         }
     }
@@ -43,27 +48,34 @@ Describe "Get-DecompiledSource cmdlet" {
     Context "Output handling" {
         It "Get-DecompiledSource_OutputPath_WritesFileAndReturnsPath" {
 
-            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $Script:TestAssemblyName
-
+            $typeName = 'ISpy.Models.ISpyTypeInfo'
+            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $typeName
             $result.Source | Should -Not -BeNullOrEmpty
+            $result.MethodNames | Should -Contain '.ctor'
+            $result.TypeName | Should -Be $typeName
+            $result.Success | Should -BeTrue
         }
     }
 
     Context "Pipeline support" {
         It "Get-DecompiledSource_PipelineInput_ProcessesAssembly" {
-            $result = $Script:TestAssembly | Get-DecompiledSource -TypeName $Script:TestAssemblyName
+            $typeName = 'ISpy.Models.ISpyAssemblyInfo'
+            $result = $Script:TestAssembly | Get-DecompiledSource -TypeName $typeName
 
             $result | Should -Not -BeNull
-            $result.TypeName | Should -Be $Script:TestAssemblyName
+            $result.TypeName | Should -Be $typeName
+            $result.Success | Should -BeTrue
         }
 
         It "Get-DecompiledSource_CustomDecompiler_UsesProvidedDecompiler" {
+            $typeName = 'ISpy.Models.ISpyAssemblyInfo'
             $decompiler = New-Decompiler -Path $Script:TestAssembly
-            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $Script:TestAssemblyName -Decompiler $decompiler
+            $result = Get-DecompiledSource -Path $Script:TestAssembly -TypeName $typeName -Decompiler $decompiler
 
             $result | Should -Not -BeNull
-            $result.TypeName | Should -Be $Script:TestAssemblyName
+            $result.TypeName | Should -Be $typeName
             $result.Source | Should -Not -BeNullOrEmpty
+            $result.Success | Should -BeTrue
         }
     }
 

@@ -1,6 +1,6 @@
 BeforeAll {
     if (-not (Get-Module ISpy)) {
-        Import-Module (Join-Path $PSScriptRoot '..' 'output' 'ISpy.psd1')
+        Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
     }
 }
 

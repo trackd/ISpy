@@ -2,7 +2,12 @@ namespace ISpy.Utilities;
 
 internal static class LoadedTypeResolver {
     private static readonly ConcurrentDictionary<Assembly, Type[]> AssemblyTypesCache = new();
+    private static readonly char[] WildcardCharacters = ['*', '?'];
+#if NET8_0_OR_GREATER
+    private static readonly Lock IndexSync = new();
+#else
     private static readonly object IndexSync = new();
+#endif
     private static int _refreshQueued;
 
     private static TypeIndexSnapshot _snapshot = TypeIndexSnapshot.Empty;
@@ -37,13 +42,13 @@ internal static class LoadedTypeResolver {
         TypeIndexSnapshot snapshot = GetSnapshot();
 
         string query = typeName.Trim();
-        bool hasWildcard = query.IndexOfAny(['*', '?']) >= 0;
+        bool hasWildcard = query.IndexOfAny(WildcardCharacters) >= 0;
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         if (hasWildcard) {
             var matcher = new WildcardPattern(query, WildcardOptions.IgnoreCase);
             foreach (Type type in snapshot.Types) {
-                string fullName = type.FullName ?? type.Name;
+                string fullName = type.FullName ?? type.Name ?? string.Empty;
                 if (!matcher.IsMatch(type.Name) && !matcher.IsMatch(fullName))
                     continue;
 
@@ -58,7 +63,7 @@ internal static class LoadedTypeResolver {
 
         if (snapshot.ByFullName.TryGetValue(query, out IReadOnlyList<Type>? byFullName)) {
             foreach (Type type in byFullName) {
-                string fullName = type.FullName ?? type.Name;
+                string fullName = type.FullName ?? type.Name ?? string.Empty;
                 if (seen.Add(fullName))
                     yield return type;
             }
@@ -66,7 +71,7 @@ internal static class LoadedTypeResolver {
 
         if (snapshot.ByName.TryGetValue(query, out IReadOnlyList<Type>? byName)) {
             foreach (Type type in byName) {
-                string fullName = type.FullName ?? type.Name;
+                string fullName = type.FullName ?? type.Name ?? string.Empty;
                 if (seen.Add(fullName))
                     yield return type;
             }
@@ -90,11 +95,11 @@ internal static class LoadedTypeResolver {
         }
 
         string name = type.Name ?? string.Empty;
-        if (name.Length > 0 && name.Contains('<'))
+        if (LoadedTypeNameHelpers.ContainsCompilerGeneratedMarker(name))
             return true;
 
         string full = type.FullName ?? string.Empty;
-        return full.Length > 0 && full.Contains('<');
+        return LoadedTypeNameHelpers.ContainsCompilerGeneratedMarker(full);
     }
 
     public static bool IsCompilerGenerated(MemberInfo? member) {
@@ -110,7 +115,7 @@ internal static class LoadedTypeResolver {
         }
 
         string name = member.Name ?? string.Empty;
-        return name.Length > 0 && name.Contains('<');
+        return LoadedTypeNameHelpers.ContainsCompilerGeneratedMarker(name);
     }
 
     public static TypeKind ToTypeKind(Type type) {
@@ -137,7 +142,7 @@ internal static class LoadedTypeResolver {
     }
 
     public static ISpyTypeInfo CreateTypeInfo(Type type) {
-        string fullName = type.FullName ?? type.Name;
+        string fullName = type.FullName ?? type.Name ?? string.Empty;
         string? assemblyPath = null;
         if (!type.Assembly.IsDynamic) {
             try {
@@ -150,7 +155,7 @@ internal static class LoadedTypeResolver {
 
         return new ISpyTypeInfo {
             FullName = fullName,
-            Name = type.Name,
+            Name = type.Name ?? string.Empty,
             Namespace = type.Namespace ?? string.Empty,
             Kind = ToTypeKind(type),
             IsPublic = type.IsPublic || type.IsNestedPublic,
@@ -237,19 +242,17 @@ internal static class LoadedTypeResolver {
 
         foreach (Assembly assembly in assemblies.OrderBy(a => a.FullName, StringComparer.OrdinalIgnoreCase)) {
             foreach (Type type in GetAssemblyTypesCached(assembly)) {
-                string tName = type.Name ?? string.Empty;
-                string? tFull = type.FullName;
                 if (IsCompilerGenerated(type)) {
                     continue;
                 }
 
                 allTypes.Add(type);
 
-                string? fullName = type.FullName ?? type.Name;
+                string fullName = type.FullName ?? type.Name ?? string.Empty;
 
-                if (!byFullNameBuilder.TryGetValue(fullName!, out List<Type>? fullList)) {
+                if (!byFullNameBuilder.TryGetValue(fullName, out List<Type>? fullList)) {
                     fullList = [];
-                    byFullNameBuilder[fullName!] = fullList;
+                    byFullNameBuilder[fullName] = fullList;
                 }
                 fullList.Add(type);
 
@@ -260,9 +263,9 @@ internal static class LoadedTypeResolver {
                 }
                 nameList.Add(type);
 
-                typeNameSet.Add(fullName!);
+                _ = typeNameSet.Add(fullName);
                 if (!string.IsNullOrWhiteSpace(type.Namespace))
-                    namespaceSet.Add(type.Namespace);
+                    _ = namespaceSet.Add(type.Namespace);
             }
         }
 
@@ -276,13 +279,12 @@ internal static class LoadedTypeResolver {
     }
 
     private static int ComputeAssemblyStamp(IEnumerable<Assembly> assemblies) {
-        HashCode hash = new();
-
+        int hash = 17;
         foreach (Assembly assembly in assemblies.OrderBy(a => a.FullName, StringComparer.OrdinalIgnoreCase)) {
-            hash.Add(assembly.FullName, StringComparer.OrdinalIgnoreCase);
+            hash = unchecked((hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(assembly.FullName ?? string.Empty));
             if (!assembly.IsDynamic) {
                 try {
-                    hash.Add(assembly.Location, StringComparer.OrdinalIgnoreCase);
+                    hash = unchecked((hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(assembly.Location ?? string.Empty));
                 }
                 catch {
                     // ignored for dynamic/special-case assemblies
@@ -290,7 +292,7 @@ internal static class LoadedTypeResolver {
             }
         }
 
-        return hash.ToHashCode();
+        return hash;
     }
 
     private static Type[] GetAssemblyTypesCached(Assembly assembly) {
@@ -348,8 +350,10 @@ public sealed class LoadedMethodNameCompleter : IArgumentCompleter {
         if (!fakeBoundParameters.Contains("TypeName"))
             return [];
 
-        string? typeName = fakeBoundParameters["TypeName"]?.ToString();
-        if (string.IsNullOrWhiteSpace(typeName) || !LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? type) || type is null)
+        if (fakeBoundParameters["TypeName"]?.ToString() is not { Length: > 0 } resolvedTypeName || string.IsNullOrWhiteSpace(resolvedTypeName))
+            return [];
+
+        if (!LoadedTypeResolver.TryResolveLoadedType(resolvedTypeName, out Type? type) || type is null)
             return [];
 
         string wildcard = string.IsNullOrWhiteSpace(wordToComplete) ? "*" : "*" + wordToComplete + "*";
@@ -382,4 +386,17 @@ public sealed class LoadedNamespaceCompleter : IArgumentCompleter {
 file static class LoadedMethodNameCompleterExtensions {
     public static IEnumerable<MethodInfo> GetMethodsCached(this Type type)
         => ReflectionCache.GetMethods(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+}
+
+file static class LoadedTypeNameHelpers {
+    public static bool ContainsCompilerGeneratedMarker(string value) {
+        if (value.Length == 0)
+            return false;
+
+#if NETSTANDARD2_0
+        return value.IndexOf('<') >= 0;
+#else
+        return value.Contains('<');
+#endif
+    }
 }

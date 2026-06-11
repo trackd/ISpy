@@ -60,7 +60,11 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
                 : string.Concat(pkt.Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
             assemblyFullName = asmName.FullName ?? assemblyFullName;
             int commaIndex = assemblyFullName.IndexOf(',');
+#if NETSTANDARD2_0
+            assemblySimpleName = commaIndex > 0 ? assemblyFullName.Substring(0, commaIndex) : assemblyFullName;
+#else
             assemblySimpleName = commaIndex > 0 ? assemblyFullName[..commaIndex] : assemblyFullName;
+#endif
         }
         catch (Exception ex) {
             WriteVerbose($"Could not read AssemblyName for '{resolvedPath}': {ex.Message}");
@@ -113,7 +117,7 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
                         _ = blobReader.ReadUInt16();
                         string? tfm = blobReader.ReadSerializedString();
                         if (!string.IsNullOrEmpty(tfm)) {
-                            targetFramework = tfm;
+                            targetFramework = tfm ?? "Unknown";
                             break;
                         }
                     }
@@ -154,24 +158,26 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
     }
 
     private string? ResolveAssemblyPathFromInput(string? path, string? typeName) {
-        if (!string.IsNullOrWhiteSpace(path))
-            return GetUnresolvedProviderPathFromPSPath(path);
+        if (path is { Length: > 0 } pathInput && !string.IsNullOrWhiteSpace(pathInput))
+            return GetUnresolvedProviderPathFromPSPath(pathInput);
 
-        if (string.IsNullOrWhiteSpace(typeName)) {
+        if (typeName is not { Length: > 0 } requestedTypeName || string.IsNullOrWhiteSpace(requestedTypeName)) {
             WriteError(new ErrorRecord(
                 new ArgumentException("Path or TypeName must be provided."),
                 "MissingPathOrTypeName",
                 ErrorCategory.InvalidArgument,
-                this));
+                this
+            ));
             return null;
         }
 
-        if (!LoadedTypeResolver.TryResolveLoadedType(typeName, out Type? loadedType) || loadedType is null) {
+        if (!LoadedTypeResolver.TryResolveLoadedType(requestedTypeName, out Type? loadedType) || loadedType is null) {
             WriteError(new ErrorRecord(
-                new ArgumentException($"Loaded type not found: {typeName}"),
+                new ArgumentException($"Loaded type not found: {requestedTypeName}"),
                 "LoadedTypeNotFound",
                 ErrorCategory.ObjectNotFound,
-                typeName));
+                requestedTypeName
+            ));
             return null;
         }
 
@@ -180,10 +186,11 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
         }
         catch {
             WriteError(new ErrorRecord(
-                new FileNotFoundException($"Assembly location is unavailable for loaded type: {typeName}"),
+                new FileNotFoundException($"Assembly location is unavailable for loaded type: {requestedTypeName}"),
                 "AssemblyNotFound",
                 ErrorCategory.ObjectNotFound,
-                typeName));
+                requestedTypeName
+            ));
             return null;
         }
     }
@@ -193,7 +200,8 @@ public class GetAssemblyInfoCmdlet : PSCmdlet {
             SearchHelpers.TryFirst(
                 module.GetAssemblyAttributes(),
                 attr => attr.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute",
-                out IAttribute? targetFrameworkAttr);
+                out IAttribute? targetFrameworkAttr
+            );
 
             return targetFrameworkAttr?.FixedArguments.Length > 0
                 ? targetFrameworkAttr.FixedArguments[0].Value?.ToString() ?? "Unknown"

@@ -11,6 +11,7 @@ namespace ISpy.Cmdlets;
 [Alias("ent")]
 public class ExpandTypeCmdlet : PSCmdlet {
     private readonly Dictionary<string, CSharpDecompiler> _decompilerCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly char[] TypeTickSeparator = ['`'];
 
     [Parameter(
         ValueFromPipeline = true,
@@ -126,8 +127,8 @@ public class ExpandTypeCmdlet : PSCmdlet {
                         return;
                     }
 
-                    if (!string.IsNullOrEmpty(DecompilationInput.Source)) {
-                        WriteFormattedSource(DecompilationInput.Source, DecompilationInput.TypeName, DecompilationInput.AssemblyPath, method: null);
+                    if (DecompilationInput.Source is { Length: > 0 } decompilationSource) {
+                        WriteFormattedSource(decompilationSource, DecompilationInput.TypeName, DecompilationInput.AssemblyPath, method: null);
                         return;
                     }
 
@@ -173,8 +174,8 @@ public class ExpandTypeCmdlet : PSCmdlet {
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(pipedResult.Source)) {
-                    WriteFormattedSource(pipedResult.Source, pipedResult.TypeName, pipedResult.AssemblyPath, method: null);
+                if (pipedResult.Source is { Length: > 0 } pipedSource) {
+                    WriteFormattedSource(pipedSource, pipedResult.TypeName, pipedResult.AssemblyPath, method: null);
                     return;
                 }
 
@@ -182,8 +183,8 @@ public class ExpandTypeCmdlet : PSCmdlet {
             }
 
             string? inputFullName = inputPsObject?.BaseObject?.GetType()?.FullName;
-            string inputShortName = inputFullName is null ? string.Empty : inputFullName.Split('`', 2)[0];
-            WriteVerbose($"Show-Type ParameterSetName: {ParameterSetName}, input: {inputShortName}");
+            string inputShortName = inputFullName is null ? string.Empty : inputFullName.Split(TypeTickSeparator, 2)[0];
+            WriteVerbose($"Expand-Type ParameterSetName: {ParameterSetName}, input: {inputShortName}");
             object? resolvedInput = inputPsObject;
             if (PowerShellCommandResolver.TryGetCommandInfo(this, inputPsObject, out CommandInfo? resolvedCommand) && resolvedCommand is not null)
                 resolvedInput = resolvedCommand;
@@ -202,7 +203,7 @@ public class ExpandTypeCmdlet : PSCmdlet {
                     decompiler: decompiler
                 );
                 WriteDecompiledOutput(null, assemblyPath, source, resolvedType.FullName);
-                WriteVerbose($"Show-Type resolved type: {resolvedType.FullName}");
+                WriteVerbose($"Expand-Type resolved type: {resolvedType.FullName}");
                 wroteResult = true;
             }
 
@@ -217,14 +218,14 @@ public class ExpandTypeCmdlet : PSCmdlet {
             }
             else if (!wroteResult) {
                 foreach (ResolvedMethodTarget r in TypeResolutionHelper.Resolve(resolvedInput, MethodName)) {
-                    WriteVerbose($"Show-Type resolved method: {r.Method.DeclaringType?.FullName}.{r.Method.Name} (Token={r.Method.MetadataToken})");
+                    WriteVerbose($"Expand-Type resolved method: {r.Method.DeclaringType?.FullName}.{r.Method.Name} (Token={r.Method.MetadataToken})");
                     WriteResolvedMethod(r);
                     wroteResult = true;
                 }
             }
 
             if (!wroteResult) {
-                WriteVerbose("Show-Type did not locate a method to decompile.");
+                WriteVerbose("Expand-Type did not locate a method to decompile.");
             }
         }
         catch (PipelineStoppedException) {
@@ -240,11 +241,11 @@ public class ExpandTypeCmdlet : PSCmdlet {
     }
 
     private bool HandleExplicitParameters() {
-        if (string.IsNullOrEmpty(TypeName))
+        if (TypeName is not { Length: > 0 } explicitTypeName)
             return false;
 
-        if (string.IsNullOrEmpty(Path)) {
-            if (!LoadedTypeResolver.TryResolveLoadedType(TypeName, out Type? loadedType) || loadedType is null) {
+        if (Path is not { Length: > 0 } explicitPath) {
+            if (!LoadedTypeResolver.TryResolveLoadedType(explicitTypeName, out Type? loadedType) || loadedType is null) {
                 WriteError(new ErrorRecord(
                     new ArgumentException($"Loaded type not found: {TypeName}"),
                     "LoadedTypeNotFound",
@@ -276,7 +277,7 @@ public class ExpandTypeCmdlet : PSCmdlet {
             return true;
         }
 
-        string resolvedAssembly = GetResolvedAssemblyPath(Path);
+        string resolvedAssembly = GetResolvedAssemblyPath(explicitPath);
         if (!File.Exists(resolvedAssembly)) {
             WriteError(new ErrorRecord(
                 new FileNotFoundException($"Assembly not found: {resolvedAssembly}"),
@@ -378,8 +379,8 @@ public class ExpandTypeCmdlet : PSCmdlet {
             return;
         }
 
-        if (!string.IsNullOrEmpty(result.Source)) {
-            WriteFormattedSource(result.Source, declaringTypeHint, assemblyPath, method);
+        if (result.Source is { Length: > 0 } resultSource) {
+            WriteFormattedSource(resultSource, declaringTypeHint, assemblyPath, method);
         }
     }
 
@@ -438,8 +439,8 @@ public class ExpandTypeCmdlet : PSCmdlet {
             int[] metadataTokens = [];
             if (refl is not null) {
                 MethodInfo[] methods = ReflectionCache.GetMethods(refl, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                methodNames = [.. methods.Where(m => !(m.Name?.StartsWith('<') ?? false)).Select(m => m.Name)];
-                metadataTokens = [.. methods.Where(m => !(m.Name?.StartsWith('<') ?? false)).Select(m => m.MetadataToken)];
+                methodNames = [.. methods.Where(m => !(m.Name?.Length > 0 && m.Name[0] == '<')).Select(m => m.Name)];
+                metadataTokens = [.. methods.Where(m => !(m.Name?.Length > 0 && m.Name[0] == '<')).Select(m => m.MetadataToken)];
             }
 
             var result = new ISpyDecompilationResult {
@@ -466,26 +467,36 @@ public class ExpandTypeCmdlet : PSCmdlet {
 
         foreach (ResolvedMethodTarget resolved in resolvedTargets) {
             MethodBase method = resolved.Method;
-            WriteVerbose($"Show-Type resolved method: {method.DeclaringType?.FullName}.{method.Name} (Token={method.MetadataToken})");
+            WriteVerbose($"Expand-Type resolved method: {method.DeclaringType?.FullName}.{method.Name} (Token={method.MetadataToken})");
 
             string assemblyPath = resolved.AssemblyPath;
+            List<string>? assemblyMethodNames;
+            HashSet<int>? assemblyMetadataTokens;
             if (!methodsByAssembly.TryGetValue(assemblyPath, out List<MethodBase>? methodList)) {
                 methodList = [];
                 methodsByAssembly[assemblyPath] = methodList;
-                methodNamesByAssembly[assemblyPath] = [];
-                tokensByAssembly[assemblyPath] = [];
+                assemblyMethodNames = [];
+                assemblyMetadataTokens = [];
+                methodNamesByAssembly[assemblyPath] = assemblyMethodNames;
+                tokensByAssembly[assemblyPath] = assemblyMetadataTokens;
+            }
+            else {
+                assemblyMethodNames = methodNamesByAssembly[assemblyPath];
+                assemblyMetadataTokens = tokensByAssembly[assemblyPath];
             }
 
-            if (!tokensByAssembly[assemblyPath].Add(method.MetadataToken))
+            if (!assemblyMetadataTokens.Add(method.MetadataToken))
                 continue;
 
             methodList.Add(method);
-            methodNamesByAssembly[assemblyPath].Add(method.Name);
+            assemblyMethodNames.Add(method.Name);
         }
 
         foreach (KeyValuePair<string, List<MethodBase>> entry in methodsByAssembly) {
             if (entry.Value.Count == 0)
                 continue;
+
+            MethodBase firstMethod = entry.Value[0];
 
             CSharpDecompiler? decompiler = GetDecompilerForAssembly(entry.Key);
             if (decompiler is null)
@@ -499,7 +510,7 @@ public class ExpandTypeCmdlet : PSCmdlet {
 
             var result = new ISpyDecompilationResult {
                 AssemblyPath = entry.Key,
-                TypeName = entry.Value[0].DeclaringType?.FullName,
+                TypeName = firstMethod.DeclaringType?.FullName,
                 Source = source,
                 Success = !string.IsNullOrEmpty(source),
                 MethodNames = [.. methodNamesByAssembly[entry.Key]],
@@ -510,19 +521,21 @@ public class ExpandTypeCmdlet : PSCmdlet {
                 WriteObject(result);
             }
             else if (!string.IsNullOrEmpty(source)) {
-                WriteFormattedSource(source, entry.Value[0].DeclaringType?.FullName, entry.Key, entry.Value[0]);
+                WriteFormattedSource(source, firstMethod.DeclaringType?.FullName, entry.Key, firstMethod);
             }
         }
     }
 
     private void WriteFormattedSource(string source, string? declaringTypeFullName, string? assemblyPath, MethodBase? method) {
         if (ShouldPostProcessOutput) {
-            WriteObject(SourceOutputFactory.CreateFromTypeName(
-                source,
-                declaringTypeFullName,
-                assemblyPath: assemblyPath,
-                method: method,
-                preserveUsingDeclarations: false));
+            WriteObject(
+                SourceOutputFactory.CreateFromTypeName(
+                    source,
+                    declaringTypeFullName,
+                    assemblyPath: assemblyPath,
+                    method: method,
+                    preserveUsingDeclarations: false
+                ));
             return;
         }
 
@@ -604,6 +617,29 @@ public class ExpandTypeCmdlet : PSCmdlet {
 
     private Assembly? LoadAssembly(string assemblyPath) {
         string normalizedPath = GetResolvedAssemblyPath(assemblyPath);
+#if NETSTANDARD2_0
+        foreach (Assembly loaded in AppDomain.CurrentDomain.GetAssemblies()) {
+            try {
+                if (string.Equals(loaded.Location, normalizedPath, StringComparison.OrdinalIgnoreCase))
+                    return loaded;
+            }
+            catch {
+                // Some dynamic/runtime assemblies throw when Location is queried.
+            }
+        }
+
+        try {
+            return Assembly.LoadFrom(normalizedPath);
+        }
+        catch (Exception ex) {
+            WriteError(new ErrorRecord(
+                ex,
+                "AssemblyLoadFailed",
+                ErrorCategory.ResourceUnavailable,
+                assemblyPath));
+            return null;
+        }
+#else
         foreach (Assembly loaded in AssemblyLoadContext.Default.Assemblies) {
             if (string.Equals(loaded.Location, normalizedPath, StringComparison.OrdinalIgnoreCase))
                 return loaded;
@@ -620,5 +656,6 @@ public class ExpandTypeCmdlet : PSCmdlet {
                 assemblyPath));
             return null;
         }
+#endif
     }
 }

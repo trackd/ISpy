@@ -29,7 +29,7 @@ internal static class CSharpFormattingOptionsDynamicParameters {
     }
 
     public static CSharpFormattingOptions CreateFromBoundParameters(IDictionary boundParameters) {
-        ArgumentNullException.ThrowIfNull(boundParameters);
+        ArgumentGuards.ThrowIfNull(boundParameters, nameof(boundParameters));
 
         // CSharpFormattingOptions has no public parameterless constructor.
         // Clone a baseline instance from DecompilerSettings and then apply bound values.
@@ -40,8 +40,8 @@ internal static class CSharpFormattingOptionsDynamicParameters {
     }
 
     private static void ApplyBoundValues(IDictionary boundParameters, CSharpFormattingOptions options) {
-        ArgumentNullException.ThrowIfNull(boundParameters);
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentGuards.ThrowIfNull(boundParameters, nameof(boundParameters));
+        ArgumentGuards.ThrowIfNull(options, nameof(options));
 
         foreach (KeyValuePair<string, PropertyInfo> property in FormattingProperties.Value) {
             if (!boundParameters.Contains(property.Key))

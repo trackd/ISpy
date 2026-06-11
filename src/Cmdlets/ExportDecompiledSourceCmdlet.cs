@@ -55,7 +55,10 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
     protected override void ProcessRecord() {
         try {
-            string resolvedAssembly = GetUnresolvedProviderPathFromPSPath(Path);
+            if (Path is not { Length: > 0 } assemblyPathInput)
+                return;
+
+            string resolvedAssembly = GetUnresolvedProviderPathFromPSPath(assemblyPathInput);
             if (!File.Exists(resolvedAssembly)) {
                 WriteError(new ErrorRecord(
                     new FileNotFoundException($"Assembly file not found: {resolvedAssembly}"),
@@ -65,7 +68,10 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
                 return;
             }
 
-            string resolvedOutputDir = GetUnresolvedProviderPathFromPSPath(OutputPath);
+            if (OutputPath is not { Length: > 0 } outputPathInput)
+                return;
+
+            string resolvedOutputDir = GetUnresolvedProviderPathFromPSPath(outputPathInput);
             if (!Directory.Exists(resolvedOutputDir)) {
                 WriteVerbose($"Creating output directory: {resolvedOutputDir}");
                 Directory.CreateDirectory(resolvedOutputDir);
@@ -73,17 +79,11 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
             WriteVerbose($"Loading assembly: {resolvedAssembly}");
 
-            CSharpDecompiler decompiler;
-            if (Decompiler is not null) {
-                decompiler = Decompiler;
-            }
-            else if (Settings is not null) {
-                decompiler = DecompilerFactory.Create(resolvedAssembly, Settings);
-            }
-            else {
-                decompiler = ILSpyDecompiler.CreateDecompiler(resolvedAssembly, useUsingDeclarations: true, showXmlDocumentation: Settings?.ShowXmlDocumentation ?? false);
-            }
-
+            CSharpDecompiler decompiler = Decompiler is not null
+                ? Decompiler
+                : Settings is not null
+                    ? DecompilerFactory.Create(resolvedAssembly, Settings)
+                    : ILSpyDecompiler.CreateDecompiler(resolvedAssembly, useUsingDeclarations: true, showXmlDocumentation: Settings?.ShowXmlDocumentation ?? false);
             int exportedFiles = 0;
             int skippedFiles = 0;
 
@@ -123,11 +123,11 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
 
                 IEnumerable<ITypeDefinition> types = decompiler.TypeSystem.MainModule.TypeDefinitions;
 
-                if (!string.IsNullOrEmpty(Namespace)) {
-                    types = types.Where(t => t.Namespace.Equals(Namespace, StringComparison.OrdinalIgnoreCase));
+                if (Namespace is { Length: > 0 } namespaceFilter) {
+                    types = types.Where(t => t.Namespace.Equals(namespaceFilter, StringComparison.OrdinalIgnoreCase));
                 }
 
-                foreach (ITypeDefinition? type in types.Where(t => !t.Name.StartsWith('<'))) // Filter out compiler-generated types
+                foreach (ITypeDefinition? type in types.Where(t => !(t.Name.Length > 0 && t.Name[0] == '<'))) // Filter out compiler-generated types
                 {
                     try {
                         WriteVerbose($"Decompiling type: {type.FullName}");
@@ -186,7 +186,16 @@ public class ExportDecompiledSourceCmdlet : PSCmdlet {
                 : System.IO.Path.Combine(outputDirectory, fileName);
 
             if (CreateNamespaceDirectories.IsPresent && !string.IsNullOrEmpty(type.Namespace)) {
-                string namespaceDir = System.IO.Path.GetDirectoryName(filePath)!;
+                string? namespaceDir = System.IO.Path.GetDirectoryName(filePath);
+                if (string.IsNullOrEmpty(namespaceDir)) {
+                    return new ISpyExportResult {
+                        TypeName = type.FullName,
+                        FilePath = filePath,
+                        Success = false,
+                        Message = "Could not derive namespace directory path"
+                    };
+                }
+
                 if (!Directory.Exists(namespaceDir)) {
                     Directory.CreateDirectory(namespaceDir);
                 }
