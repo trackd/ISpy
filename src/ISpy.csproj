@@ -5,11 +5,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <ImplicitUsings>enable</ImplicitUsings>
-        <!-- <NoWarn>IDE0010</NoWarn> -->
         <LangVersion>14.0</LangVersion>
         <Nullable>enable</Nullable>
-        <Version>0.5.0</Version>
-        <Fileversion>0.5.0.0</Fileversion>
         <Authors>trackd</Authors>
         <Description>PowerShell module for decompiling .NET assemblies using ILSpy decompiler</Description>
     </PropertyGroup>
@@ -19,7 +16,7 @@
         <AnalysisLevel>latest-Recommended</AnalysisLevel>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="ICSharpCode.Decompiler" Version="10.1.0.8386" />
+        <PackageReference Include="ICSharpCode.Decompiler" Version="11.1.0.9782" />
         <PackageReference Include="Roslynator.Analyzers" Version="4.*">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>

@@ -350,6 +350,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -DefaultLiterals
+
+Set DecompilerSettings.DefaultLiterals to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -DictionaryInitializers
 
 Set DecompilerSettings.DictionaryInitializers to $true.
@@ -427,6 +438,17 @@ Position: Named
 Accept pipeline input: False
 ```
 
+### -ExpandXmlDocumentationComments
+
+Set DecompilerSettings.ExpandXmlDocumentationComments to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
 ### -ExpressionTrees
 
 Set DecompilerSettings.ExpressionTrees to $true.
@@ -463,6 +485,17 @@ Accept pipeline input: False
 ### -ExtensionMethodsInCollectionInitializers
 
 Set DecompilerSettings.ExtensionMethodsInCollectionInitializers to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -FieldKeyword
+
+Set DecompilerSettings.FieldKeyword to $true.
 
 ```yaml
 Type: SwitchParameter
@@ -639,6 +672,17 @@ Accept pipeline input: False
 ### -IntroduceUnmanagedConstraint
 
 Set DecompilerSettings.IntroduceUnmanagedConstraint to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -LambdaOptionalAndParamsParameters
+
+Set DecompilerSettings.LambdaOptionalAndParamsParameters to $true.
 
 ```yaml
 Type: SwitchParameter
@@ -1000,17 +1044,6 @@ Position: Named
 Accept pipeline input: False
 ```
 
-### -RuntimeAsync
-
-Set DecompilerSettings.RuntimeAsync to $true.
-
-```yaml
-Type: SwitchParameter
-Required: False
-Position: Named
-Accept pipeline input: False
-```
-
 ### -ScopedRef
 
 Set DecompilerSettings.ScopedRef to $true.
@@ -1058,6 +1091,17 @@ Accept pipeline input: False
 ### -SortCustomAttributes
 
 Set DecompilerSettings.SortCustomAttributes to $true.
+
+```yaml
+Type: SwitchParameter
+Required: False
+Position: Named
+Accept pipeline input: False
+```
+
+### -SortSwitchSections
+
+Set DecompilerSettings.SortSwitchSections to $true.
 
 ```yaml
 Type: SwitchParameter

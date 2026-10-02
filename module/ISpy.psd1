@@ -6,7 +6,7 @@
     else {
         'netstandard2.0/ISpy.dll'
     }
-    ModuleVersion          = '0.5.0'
+    ModuleVersion          = '0.6.0'
     GUID                   = '15ad5935-21a2-4eed-aeec-2232c7507dc2'
     Author                 = 'trackd'
     CompanyName            = 'trackd'
@@ -59,5 +59,4 @@
             # Prerelease                 = ''
         }
     }
-    # HelpInfoURI            = 'https://github.com/trackd/ISpy/tree/main/docs/en-us'
 }
