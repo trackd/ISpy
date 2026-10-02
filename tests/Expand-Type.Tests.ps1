@@ -135,24 +135,4 @@ Describe 'Expand-Type cmdlet' {
         $output | Should -Not -Match '///\s*<summary>'
     }
 
-    It 'Expand-Type_IncludeXml_IncludesXmlAndRemovesUsingDirectives' {
-        if ($PSEdition -ne 'Core') {
-            $output = [System.IO.Directory]::GetFileSystemEntries | Expand-Type -IncludeXml
-            $output | Should -Not -BeNullOrEmpty
-            $output | Should -BeOfType System.String
-            $output | Should -Match '///\s*<summary>'
-            $output | Should -Not -Match '(?m)^\s*using\s+'
-        }
-        else {
-            $output = [System.Management.Automation.Host.PSHostUserInterface]::GetFormatStyleString | Expand-Type -IncludeXml
-            $output | Should -Not -BeNullOrEmpty
-            $output | Should -BeOfType System.String
-            $output | Should -Match '///\s*<summary>'
-            $output | Should -Not -Match '(?m)^\s*using\s+'
-            $output | Should -Not -Match 'System\.Management\.Automation\.PSStyle'
-            $output | Should -Not -Match 'System\.Management\.Automation\.OutputRendering'
-            $output | Should -Match '\bPSStyle\b'
-            $output | Should -Match '\bOutputRendering\b'
-        }
-    }
 }

@@ -2,6 +2,7 @@ BeforeAll {
     if (-not (Get-Module ISpy)) {
         Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'output', 'ISpy.psd1'))
     }
+    Add-Type -AssemblyName System.Web.HttpUtility
     $Script:TestAssembly = [System.Web.HttpUtility].Assembly.Location
     $Script:TestAssemblyName = [System.Reflection.AssemblyName]::GetAssemblyName($Script:TestAssembly).Name
 }

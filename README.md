@@ -105,6 +105,14 @@ Get-Item (Get-Module ISpy).Path | Get-Dependency -ExternalOnly
 Get-DecompiledSource -Path (Join-Path $PSHOME 'System.Console.dll') | Select-Object -First 1
 ```
 
+### Change to Default Formatting
+
+```powershell
+[System.Console]::Write | Expand-Type -Settings (New-DecompilerSetting)
+# also possible to add this to your $profile
+$PSDefaultParameterValues['Expand-Type:Settings'] = New-DecompilerSetting
+```
+
 ### Custom decompilersettings / formatting
 
 ```powershell
@@ -130,6 +138,7 @@ $options = @{
 $Settings = New-DecompilerSetting @options
 [System.Console]::Write | Expand-Type -Settings $Settings
 ```
+
 
 see  `docs/en-us/` for more examples.
 

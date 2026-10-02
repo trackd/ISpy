@@ -33,7 +33,7 @@ task Build {
         return
     }
 
-    # $ModuleFile = Import-PowerShellDataFile -Path (Join-Path $script:folders.ProjectRoot 'module' "$($script:folders.ModuleName).psd1")
+    $ModuleFile = Get-Module (Join-Path $script:folders.ProjectRoot 'module' "$($script:folders.ModuleName).psd1") -ListAvailable
     [xml]$csproj = Get-Content -Path $folders.CsprojPath -Raw
     $frameworks = $csproj.
     SelectNodes('//TargetFramework | //TargetFrameworks').
@@ -46,7 +46,7 @@ task Build {
         '--configuration', $Configuration
         '--nologo'
         '--verbosity', 'minimal'
-        #('-p:Version={0}' -f $ModuleFile.ModuleVersion.ToString())
+        ('-p:Version={0}' -f $ModuleFile.Version.ToString())
     )
 
     foreach ($fwork in $frameworks) {

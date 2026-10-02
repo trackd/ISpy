@@ -78,8 +78,38 @@ internal static class LoadedTypeResolver {
         }
     }
 
-    public static bool TryResolveLoadedType(string typeName, out Type? resolvedType)
-        => SearchHelpers.TryFirst(FindLoadedTypesByName(typeName), out resolvedType);
+    public static bool TryResolveLoadedType(string typeName, out Type? resolvedType) {
+        if (SearchHelpers.TryFirst(FindLoadedTypesByName(typeName), out resolvedType))
+            return true;
+
+        if (string.IsNullOrWhiteSpace(typeName) || typeName.IndexOfAny(WildcardCharacters) >= 0) {
+            resolvedType = null;
+            return false;
+        }
+
+        Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        if (Volatile.Read(ref _snapshot).Stamp == ComputeAssemblyStamp(assemblies)) {
+            resolvedType = null;
+            return false;
+        }
+
+        foreach (Assembly assembly in assemblies) {
+            try {
+                Type? type = assembly.GetType(typeName, throwOnError: false, ignoreCase: true);
+                if (type is null || IsCompilerGenerated(type))
+                    continue;
+
+                resolvedType = type;
+                return true;
+            }
+            catch {
+                // Ignore assemblies that cannot resolve a type during the fallback scan.
+            }
+        }
+
+        resolvedType = null;
+        return false;
+    }
 
     public static bool IsCompilerGenerated(Type type) {
         if (type is null)
